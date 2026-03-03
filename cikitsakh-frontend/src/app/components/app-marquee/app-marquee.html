@@ -1,0 +1,14 @@
+<div class="marquee-wrapper">
+  <div class="marquee-track">
+    <div class="feature-card" *ngFor="let feature of features">
+      <h5>{{ feature.title }}</h5>
+      <p>{{ feature.description }}</p>
+    </div>
+
+    <!-- duplicate for seamless infinite scroll -->
+    <div class="feature-card" *ngFor="let feature of features">
+      <h5>{{ feature.title }}</h5>
+      <p>{{ feature.description }}</p>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,72 @@
+<div class="section-title">
+  Doctors Near You
+
+  <div class="filters-bar">
+
+    <!-- Speciality Dropdown -->
+    <div class="filter-item">
+      <select (change)="onSpecialityChange($event)">
+        <option value="">All Specialities</option>
+        <option *ngFor="let spec of specializations" [value]="spec">
+          {{ spec }}
+        </option>
+      </select>
+    </div>
+
+    <!-- Rating Filter -->
+    <div class="filter-item">
+      <select (change)="onRatingChange($event)">
+        <option value="">Any Rating</option>
+        <option value="4">4★ & above</option>
+        <option value="3">3★ & above</option>
+      </select>
+    </div>
+
+    <!-- Distance Filter -->
+    <div class="filter-item">
+      <select (change)="onDistanceChange($event)">
+        <option value="">Any Distance</option>
+        <option value="2">Within 2 km</option>
+        <option value="5">Within 5 km</option>
+        <option value="10">Within 10 km</option>
+      </select>
+    </div>
+
+    <!-- Pet Only Toggle -->
+    <div class="filter-item pet-toggle">
+      <label>
+        <input type="checkbox" (change)="onPetToggle($event)">
+        Pet Only
+      </label>
+    </div>
+
+  </div>
+</div>
+
+<div *ngIf="loading">Loading doctors...</div>
+
+<div class="card-container" *ngIf="!loading">
+
+  <div class="doctor-card" *ngFor="let doc of doctors">
+
+    <div class="image-wrapper">
+      <img [src]="doc.image" alt="doctor">
+      <span class="rating">{{ doc.rating }} ★</span>
+    </div>
+
+    <div class="card-body">
+      <h3>{{ doc.name }}</h3>
+      <p class="specialization">{{ doc.specialization }}</p>
+      <p>{{ doc.experience }}</p>
+      <p class="hospital">{{ doc.hospital }}</p>
+      <p class="location">{{ doc.location }}</p>
+
+      <div class="bottom-info">
+        <span>{{ doc.distance }}</span>
+        <button class="book-btn">Book Appointment</button>
+      </div>
+    </div>
+
+  </div>
+
+</div>

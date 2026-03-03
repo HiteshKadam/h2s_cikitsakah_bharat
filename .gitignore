@@ -1,0 +1,10 @@
+*/node_modules
+/dist
+/.env
+/.angular
+/.vscode
+/coverage
+/.idea
+.DS_Store
+*.log
+*.tsbuildinfo

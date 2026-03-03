@@ -1,0 +1,42 @@
+<div class="container mt-5">
+
+    <!-- Back Button -->
+    <button class="btn btn-outline-secondary mb-3" (click)="goBack()">
+        ← Back
+    </button>
+
+    <div class="card shadow">
+        <div class="card-body">
+
+            <h3 class="mb-3">
+                {{ careType === 'human' ? 'Human' : 'Pet' }} Symptoms
+            </h3>
+
+            <div class="mb-3">
+                <label class="form-label">Describe Symptoms</label>
+                <textarea class="form-control" [(ngModel)]="symptoms" rows="3"
+                    placeholder="e.g., fever, cough, itching...">
+        </textarea>
+                <button class="btn btn-outline-primary" (click)="startListening()">
+                    🎤
+                </button>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Severity</label>
+                <select class="form-select" [(ngModel)]="severity">
+                    <option value="">Select Severity</option>
+                    <option value="mild">Mild</option>
+                    <option value="moderate">Moderate</option>
+                    <option value="severe">Severe</option>
+                </select>
+            </div>
+
+            <button class="btn btn-primary w-100">
+                Continue
+            </button>
+
+        </div>
+    </div>
+
+</div>

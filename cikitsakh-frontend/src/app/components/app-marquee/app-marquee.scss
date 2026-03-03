@@ -1,0 +1,63 @@
+.marquee-wrapper {
+  overflow: hidden;
+  position: relative;
+  padding: 50px 0;
+  margin-top: 60px;
+
+  /* Light futuristic gradient */
+  background: linear-gradient(135deg, #f8fafc, #eef2ff);
+}
+
+.marquee-track {
+  display: flex;
+  gap: 30px;
+  width: max-content;
+  animation: scroll 30s linear infinite;
+}
+
+/* Pause animation on hover */
+.marquee-wrapper:hover .marquee-track {
+  animation-play-state: paused;
+}
+
+/* Clean Premium Card */
+.feature-card {
+  min-width: 280px;
+  padding: 20px 24px;
+  border-radius: 16px;
+
+  background: white;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+
+  transition: all 0.3s ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 10px 30px rgba(239, 68, 68, 0.15);
+  border-color: #ef4444;
+}
+
+.feature-card h5 {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #111827;
+}
+
+.feature-card p {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* Smooth infinite scroll */
+@keyframes scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}

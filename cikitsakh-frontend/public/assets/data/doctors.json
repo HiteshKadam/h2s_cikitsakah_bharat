@@ -1,0 +1,48 @@
+[
+  {
+    "id": 1,
+    "name": "Dr. Amit Sharma",
+    "specialization": "Cardiologist",
+    "experience": "12 Years",
+    "hospital": "Apollo Hospital",
+    "location": "Andheri East, Mumbai",
+    "rating": 3,
+    "distance": "2.1 km",
+    "image": "assets/doctors/doc1.jpg",
+    "petFriendly": false
+  },
+  {
+    "id": 2,
+    "name": "Dr. Priya Mehta",
+    "specialization": "Dermatologist",
+    "experience": "8 Years",
+    "hospital": "Fortis Clinic",
+    "location": "Bandra West, Mumbai",
+    "rating": 4.3,
+    "distance": "3.5 km",
+    "image": "assets/doctors/doc2.jpg",
+    "petFriendly": true
+  },
+  {
+    "id": 3,
+    "name": "Dr. Raj Verma",
+    "specialization": "Orthopedic",
+    "experience": "15 Years",
+    "hospital": "Kokilaben Hospital",
+    "location": "Dadar, Mumbai",
+    "rating": 4.7,
+    "distance": "1.8 km",
+    "image": "assets/doctors/doc3.jpg"
+  },
+  {
+    "id": 4,
+    "name": "Dr. Sneha Kulkarni",
+    "specialization": "Gynecologist",
+    "experience": "10 Years",
+    "hospital": "Lilavati Hospital",
+    "location": "Dombivli",
+    "rating": 4.5,
+    "distance": "4.2 km",
+    "image": "assets/doctors/doc4.jpg"
+  }
+]

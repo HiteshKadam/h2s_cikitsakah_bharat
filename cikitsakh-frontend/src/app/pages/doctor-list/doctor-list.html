@@ -1,0 +1,69 @@
+<div class="container mt-4">
+
+  <h3 class="mb-4">Find Doctors</h3>
+
+  <!-- Filters -->
+  <div class="row g-3 mb-4">
+
+    <div class="col-md-4">
+      <select class="form-select" [(ngModel)]="range">
+        <option value="">Select Range</option>
+        <option value="1">1 km</option>
+        <option value="2">2 km</option>
+        <option value="5">5 km</option>
+        <option value="10">10 km+</option>
+      </select>
+    </div>
+
+    <div class="col-md-4">
+      <select class="form-select" [(ngModel)]="specialty">
+        <option value="">Select Specialty</option>
+        <option value="Pediatrician">Pediatrician</option>
+        <option value="Physiotherapist">Physiotherapist</option>
+        <option value="Dermatologist">Dermatologist</option>
+      </select>
+    </div>
+
+    <div class="col-md-4">
+      <button class="btn btn-primary w-100"
+              (click)="search()">
+        Search
+      </button>
+    </div>
+
+  </div>
+
+  <!-- Loader -->
+  <div class="text-center" *ngIf="loading">
+    <div class="spinner-border text-primary"></div>
+    <p class="mt-2">Searching doctors...</p>
+  </div>
+
+  <!-- Doctor Cards -->
+  <div class="row" *ngIf="!loading">
+
+    <div class="col-md-4 col-sm-6 mb-4"
+         *ngFor="let doctor of doctors">
+
+      <div class="card h-100 shadow-sm doctor-card"
+           (click)="goToAppointment(doctor.id)">
+
+        <div class="card-body">
+          <h5 class="card-title">{{doctor.name}}</h5>
+
+          <p class="card-text">
+            Age: {{doctor.age}} <br>
+            Gender: {{doctor.gender}} <br>
+            Specialty: {{doctor.specialty}} <br>
+            Experience: {{doctor.experience}} years <br>
+            Address: {{doctor.address}}
+          </p>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
