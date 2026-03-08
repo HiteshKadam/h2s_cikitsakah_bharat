@@ -32,25 +32,34 @@
       </select>
     </div>
 
-    <!-- Pet Only Toggle -->
-    <div class="filter-item pet-toggle">
-      <label>
-        <input type="checkbox" (change)="onPetToggle($event)">
-        Pet Only
-      </label>
+    <!-- Sort -->
+    <div class="filter-item">
+      <select (change)="sortDoctors($event)">
+        <option value="">Sort By</option>
+        <option value="distance">Distance</option>
+        <option value="rating">Rating</option>
+        <option value="experience">Experience</option>
+      </select>
     </div>
 
   </div>
 </div>
 
-<div *ngIf="loading">Loading doctors...</div>
+<div *ngIf="loading" class="text-center p-5">
+  <div class="spinner-border text-primary"></div>
+  <p class="mt-2">Loading doctors...</p>
+</div>
 
 <div class="card-container" *ngIf="!loading">
+
+  <div class="alert alert-info m-4" *ngIf="doctors.length === 0">
+    No doctors found. Try adjusting your filters.
+  </div>
 
   <div class="doctor-card" *ngFor="let doc of doctors">
 
     <div class="image-wrapper">
-      <img [src]="doc.image" alt="doctor">
+      <img [src]="doc.image" [alt]="doc.name">
       <span class="rating">{{ doc.rating }} ★</span>
     </div>
 
@@ -59,11 +68,13 @@
       <p class="specialization">{{ doc.specialization }}</p>
       <p>{{ doc.experience }}</p>
       <p class="hospital">{{ doc.hospital }}</p>
-      <p class="location">{{ doc.location }}</p>
+      <p class="location">📍 {{ doc.location }}</p>
 
       <div class="bottom-info">
         <span>{{ doc.distance }}</span>
-        <button class="book-btn">Book Appointment</button>
+        <button class="book-btn" (click)="bookAppointment(doc.doctor_id)">
+          Book Appointment
+        </button>
       </div>
     </div>
 

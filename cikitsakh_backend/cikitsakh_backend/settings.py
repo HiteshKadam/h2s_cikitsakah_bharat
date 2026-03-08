@@ -79,11 +79,14 @@ CORS_ALLOW_ALL_ORIGINS = True
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'cikitsakh_db',
+        'NAME': 'databasechikitsah',
         'USER': 'postgres',
-        'PASSWORD': 'postgres',
-        'HOST': 'localhost',
+        'PASSWORD': 'MasterMonu10',
+        'HOST': 'monu-chikitsh.cr2o44yia2u7.ap-south-1.rds.amazonaws.com',
         'PORT': '5432',
+        'OPTIONS': {
+            'options': '-c search_path=public'
+        }
     }
 }
 

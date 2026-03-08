@@ -9,33 +9,130 @@
         <div class="card-body">
 
             <h3 class="mb-3">
-                {{ careType === 'human' ? 'Human' : 'Pet' }} Symptoms
+                {{ careType === 'human' ? '👨‍⚕️ Human' : '🐶 Pet' }} Symptoms
             </h3>
 
             <div class="mb-3">
                 <label class="form-label">Describe Symptoms</label>
-                <textarea class="form-control" [(ngModel)]="symptoms" rows="3"
-                    placeholder="e.g., fever, cough, itching...">
-        </textarea>
-                <button class="btn btn-outline-primary" (click)="startListening()">
-                    🎤
-                </button>
+                <div class="input-group">
+                    <textarea class="form-control" [(ngModel)]="symptoms" rows="3"
+                        placeholder="e.g., chest pain, shortness of breath, fever..."></textarea>
+                    <button class="btn btn-outline-primary" (click)="startListening()" type="button">
+                        🎤
+                    </button>
+                </div>
+                <small class="text-muted">Be specific about your symptoms for better AI analysis</small>
             </div>
 
-            <div class="mb-3">
-                <label class="form-label">Severity</label>
-                <select class="form-select" [(ngModel)]="severity">
-                    <option value="">Select Severity</option>
-                    <option value="mild">Mild</option>
-                    <option value="moderate">Moderate</option>
-                    <option value="severe">Severe</option>
-                </select>
+            <div class="mb-3" *ngIf="severity">
+                <label class="form-label">Detected Severity</label>
+                <div class="alert" [ngClass]="{
+                    'alert-success': severity === 'mild',
+                    'alert-warning': severity === 'moderate',
+                    'alert-danger': severity === 'severe'
+                }">
+                    <strong>{{ severity | titlecase }}</strong>
+                    <span *ngIf="analysisResult?.urgency"> - {{ analysisResult.urgency | titlecase }} attention needed</span>
+                </div>
             </div>
 
-            <button class="btn btn-primary w-100">
-                Continue
+            <button class="btn btn-primary w-100" (click)="analyzeAndSearch()" [disabled]="loading || !symptoms">
+                <span *ngIf="!loading">🤖 AI Analyze & Find Doctors</span>
+                <span *ngIf="loading">
+                    <span class="spinner-border spinner-border-sm me-2"></span>
+                    Analyzing with AI...
+                </span>
             </button>
 
+        </div>
+    </div>
+
+    <!-- Analysis Results -->
+    <div class="card shadow mt-4" *ngIf="analysisResult && showResults">
+        <div class="card-body">
+            <h4 class="mb-3">🧠 AI Analysis Results</h4>
+            
+            <div class="alert alert-info">
+                <strong>Recommended Specialties:</strong>
+                <ul class="mb-2 mt-2">
+                    <li *ngFor="let specialty of analysisResult.recommended_specialties">
+                        {{ specialty | titlecase }}
+                        <span class="badge bg-primary ms-2" *ngIf="analysisResult.confidence_scores[specialty]">
+                            {{ (analysisResult.confidence_scores[specialty] * 100) | number:'1.0-0' }}% match
+                        </span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="alert alert-warning" *ngIf="analysisResult.recommendations">
+                <strong>💡 Recommendations:</strong>
+                <ul class="mb-0 mt-2">
+                    <li *ngFor="let rec of analysisResult.recommendations">{{ rec }}</li>
+                </ul>
+            </div>
+
+            <div class="alert alert-secondary" *ngIf="analysisResult.matched_keywords">
+                <strong>🔍 Matched Keywords:</strong>
+                <div class="mt-2">
+                    <span *ngFor="let spec of Object.keys(analysisResult.matched_keywords)" class="me-3">
+                        <strong>{{ spec }}:</strong>
+                        <span class="badge bg-secondary ms-1" *ngFor="let keyword of analysisResult.matched_keywords[spec]">
+                            {{ keyword }}
+                        </span>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recommended Doctors -->
+    <div class="mt-4" *ngIf="showResults">
+        <h4 class="mb-3">
+            👨‍⚕️ AI-Matched Doctors Near You 
+            <span class="badge bg-success" *ngIf="recommendedDoctors.length > 0">
+                {{ recommendedDoctors.length }} found
+            </span>
+        </h4>
+
+        <div class="alert alert-warning" *ngIf="recommendedDoctors.length === 0">
+            No doctors found matching your symptoms within the search radius. Try adjusting your search or consult a general practitioner.
+        </div>
+
+        <div class="card-container">
+            <div class="doctor-card" *ngFor="let doc of recommendedDoctors">
+
+                <div class="image-wrapper">
+                    <img [src]="doc.image" [alt]="doc.name">
+                    <span class="rating">{{ doc.rating || 4.5 }} ★</span>
+                    <span class="match-badge" *ngIf="doc.match_score">
+                        {{ (doc.match_score * 100) | number:'1.0-0' }}% Match
+                    </span>
+                </div>
+
+                <div class="card-body">
+                    <h3>{{ doc.name }}</h3>
+                    <p class="specialization">{{ doc.specialization || doc.specialty }}</p>
+                    <p class="match-reason" *ngIf="doc.match_reason">
+                        ✓ {{ doc.match_reason }}
+                    </p>
+                    <p>{{ doc.experience }}</p>
+                    <p class="hospital">🏥 {{ doc.hospital }}</p>
+                    <p class="location">📍 {{ doc.location }}</p>
+
+                    <div class="bottom-info">
+                        <span *ngIf="doc.distance" class="distance-badge">
+                            📍 {{ doc.distance }} km away
+                        </span>
+                        <span *ngIf="doc.search_info" class="text-muted small">
+                            {{ doc.search_info }}
+                        </span>
+                        <button class="book-btn" (click)="bookAppointment(doc.doctor_id)">
+                            Book Appointment
+                        </button>
+                    </div>
+                </div>
+
+            </div>
         </div>
     </div>
 

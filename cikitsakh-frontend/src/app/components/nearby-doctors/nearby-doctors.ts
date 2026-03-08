@@ -1,6 +1,10 @@
 import { Component, OnInit, inject, PLATFORM_ID, ChangeDetectorRef } from '@angular/core';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { CareSelectionService } from '../../services/care-selection';
+import { DoctorService } from '../../services/doctor';
+import { LocationService } from '../../services/location';
+import { Router } from '@angular/router';
 
 @Component({
   standalone: true,
@@ -23,53 +27,91 @@ export class NearbyDoctorsComponent implements OnInit {
   petOnly: boolean = false;
 
   private platformId = inject(PLATFORM_ID);
+  private careType: 'human' | 'pet' | null = null;
 
-  constructor(private http: HttpClient, private cdr: ChangeDetectorRef) { }
+  constructor(
+    private http: HttpClient,
+    private cdr: ChangeDetectorRef,
+    private careService: CareSelectionService,
+    private doctorService: DoctorService,
+    private locationService: LocationService,
+    private router: Router
+  ) { }
 
   ngOnInit(): void {
     if (isPlatformBrowser(this.platformId)) {
-      this.getLocation();
-      this.loadDoctors();
+      this.careType = this.careService.getCareType() as 'human' | 'pet';
+      this.getLocationAndLoadDoctors();
     }
   }
 
-  // ✅ Proper Geolocation Code
-  getLocation() {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          console.log('Latitude:', position.coords.latitude);
-          console.log('Longitude:', position.coords.longitude);
-        },
-        (error) => {
-          console.error('Geolocation error:', error);
-        }
-      );
-    } else {
-      console.log('Geolocation not supported');
-    }
-  }
-
-  // ✅ Load JSON
-  loadDoctors() {
-    this.http.get<any[]>('assets/data/doctors.json')
-      .subscribe({
-        next: (data) => {
-          console.log('Doctors loaded:', data);
-
-          this.allDoctors = data;
-          this.doctors = [...data];   // 👈 important
-          this.extractSpecializations();
-          this.loading = false;
-
-          this.cdr.detectChanges();   // 👈 force UI update
-        },
-        error: (err) => {
-          console.error('Failed to load doctors.json', err);
-          this.loading = false;
-          this.cdr.detectChanges();
-        }
+  getLocationAndLoadDoctors() {
+    this.locationService.getCurrentLocation()
+      .then((location) => {
+        this.loadDoctors(location.latitude, location.longitude);
+      })
+      .catch((error) => {
+        console.error('Geolocation error:', error);
+        this.loadDoctors();
       });
+  }
+
+  loadDoctors(latitude?: number, longitude?: number) {
+    if (latitude && longitude) {
+      if (this.careType === 'pet') {
+        this.doctorService.getNearbyVetDoctors(latitude, longitude, 10).subscribe({
+          next: (data: any[]) => {
+            this.allDoctors = data.map((doc: any) => ({
+              ...doc,
+              name: doc.name,
+              image: 'https://via.placeholder.com/300x220',
+              hospital: doc.clinic_name || 'N/A',
+              location: doc.address || 'N/A',
+              experience: `${doc.experience || 0} years experience`,
+              rating: doc.rating || 4.5,
+              distance: doc.distance ? `${doc.distance} km` : 'N/A',
+              specialization: doc.specialty
+            }));
+            this.doctors = [...this.allDoctors];
+            this.extractSpecializations();
+            this.loading = false;
+            this.cdr.detectChanges();
+          },
+          error: (err: any) => {
+            console.error('Failed to load doctors from API', err);
+            this.loading = false;
+            this.cdr.detectChanges();
+          }
+        });
+      } else {
+        this.doctorService.getNearbyHumanDoctors(latitude, longitude, 100).subscribe({
+          next: (data: any[]) => {
+            this.allDoctors = data.map((doc: any) => ({
+              ...doc,
+              name: `Dr. ${doc.first_name} ${doc.last_name}`,
+              image: 'https://via.placeholder.com/300x220',
+              hospital: doc.address_details?.city || 'N/A',
+              location: doc.address_details ? `${doc.address_details.city}, ${doc.address_details.state}` : 'N/A',
+              experience: `${doc.yoe || 0} years experience`,
+              rating: doc.rating || 4.5,
+              distance: doc.distance ? `${doc.distance} km` : 'N/A',
+              specialization: doc.specialization
+            }));
+            this.doctors = [...this.allDoctors];
+            this.extractSpecializations();
+            this.loading = false;
+            this.cdr.detectChanges();
+          },
+          error: (err: any) => {
+            console.error('Failed to load doctors from API', err);
+            this.loading = false;
+            this.cdr.detectChanges();
+          }
+        });
+      }
+    } else {
+      this.loading = false;
+    }
   }
 
   extractSpecializations() {
@@ -87,9 +129,7 @@ export class NearbyDoctorsComponent implements OnInit {
   }
 
   applyAdvancedFilters() {
-
     this.doctors = this.allDoctors.filter(doc => {
-
       const matchSpeciality =
         !this.selectedSpeciality ||
         doc.specialization === this.selectedSpeciality;
@@ -100,7 +140,7 @@ export class NearbyDoctorsComponent implements OnInit {
 
       const matchDistance =
         !this.selectedDistance ||
-        doc.distance <= this.selectedDistance;
+        (doc.distance && parseFloat(doc.distance) <= this.selectedDistance);
 
       const matchPet =
         !this.petOnly ||
@@ -109,7 +149,7 @@ export class NearbyDoctorsComponent implements OnInit {
       return matchSpeciality && matchRating && matchDistance && matchPet;
     });
 
-    this.doctors = [...this.doctors]; // trigger change detection
+    this.doctors = [...this.doctors];
   }
 
   isSelected(spec: string): boolean {
@@ -120,7 +160,11 @@ export class NearbyDoctorsComponent implements OnInit {
     const value = event.target.value;
 
     if (value === 'distance') {
-      this.doctors.sort((a, b) => a.distance - b.distance);
+      this.doctors.sort((a, b) => {
+        const distA = parseFloat(a.distance) || 999;
+        const distB = parseFloat(b.distance) || 999;
+        return distA - distB;
+      });
     }
 
     if (value === 'rating') {
@@ -128,10 +172,14 @@ export class NearbyDoctorsComponent implements OnInit {
     }
 
     if (value === 'experience') {
-      this.doctors.sort((a, b) => b.experience - a.experience);
+      this.doctors.sort((a, b) => {
+        const expA = parseInt(a.experience) || 0;
+        const expB = parseInt(b.experience) || 0;
+        return expB - expA;
+      });
     }
 
-    this.doctors = [...this.doctors]; // trigger UI update
+    this.doctors = [...this.doctors];
   }
 
   onSpecialityChange(event: any) {
@@ -152,5 +200,9 @@ export class NearbyDoctorsComponent implements OnInit {
   onPetToggle(event: any) {
     this.petOnly = event.target.checked;
     this.applyAdvancedFilters();
+  }
+
+  bookAppointment(doctorId: number) {
+    this.router.navigate(['/appointment', doctorId]);
   }
 }

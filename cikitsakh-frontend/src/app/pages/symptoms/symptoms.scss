@@ -1,0 +1,160 @@
+.card-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 25px;
+  margin-top: 20px;
+}
+
+.doctor-card {
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+  transition: all 0.3s ease;
+  border: 1px solid transparent;
+  overflow: hidden;
+}
+
+.doctor-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 30px rgba(115, 0, 255, 0.15);
+  border: 1px solid rgba(146, 73, 255, 0.2);
+}
+
+.image-wrapper {
+  position: relative;
+}
+
+.image-wrapper img {
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+}
+
+.rating {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  background: #16a34a;
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.card-body {
+  padding: 20px;
+
+  h3 {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  p {
+    margin-bottom: 6px;
+  }
+}
+
+.specialization {
+  color: #ef4444;
+  font-weight: 500;
+}
+
+.hospital,
+.location {
+  color: #666;
+  font-size: 14px;
+}
+
+.bottom-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 18px;
+}
+
+.book-btn {
+  background: #593196;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: 0.2s ease;
+
+  &:hover {
+    background: #883cf9;
+  }
+}
+
+.input-group {
+  display: flex;
+  gap: 8px;
+
+  textarea {
+    flex: 1;
+  }
+
+  button {
+    align-self: flex-start;
+  }
+}
+
+
+.match-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: #593196;
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.match-reason {
+  color: #16a34a;
+  font-weight: 500;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.badge {
+  font-size: 12px;
+  padding: 4px 8px;
+}
+
+.alert ul {
+  padding-left: 20px;
+  margin-bottom: 0;
+}
+
+.alert ul li {
+  margin-bottom: 5px;
+}
+
+
+.distance-badge {
+  background: #f0f0f0;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 13px;
+  color: #666;
+  font-weight: 500;
+}
+
+.bottom-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 18px;
+  flex-wrap: wrap;
+  gap: 8px;
+
+  .text-muted {
+    font-size: 11px;
+    color: #999;
+  }
+}

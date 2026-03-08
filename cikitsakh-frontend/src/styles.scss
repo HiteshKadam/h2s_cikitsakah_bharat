@@ -1,0 +1,96 @@
+/* Global Styles */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #f8f9fa;
+  color: #333;
+  line-height: 1.6;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* Bootstrap overrides */
+.btn-primary {
+  background: #593196;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: 0.2s ease;
+
+  &:hover {
+    background: #883cf9;
+  }
+}
+
+.btn-outline-secondary {
+  border-color: #ddd;
+  color: #666;
+  border-radius: 8px;
+  padding: 8px 16px;
+
+  &:hover {
+    background: #f8f9fa;
+    border-color: #593196;
+    color: #593196;
+  }
+}
+
+.card {
+  border: none;
+  border-radius: 15px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+.form-control,
+.form-select {
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  padding: 10px;
+
+  &:focus {
+    border-color: #593196;
+    box-shadow: 0 0 0 0.2rem rgba(89, 49, 150, 0.25);
+  }
+}
+
+.spinner-border {
+  width: 2rem;
+  height: 2rem;
+}
+
+/* Utility classes */
+.text-primary {
+  color: #593196 !important;
+}
+
+.bg-primary {
+  background: #593196 !important;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease;
+}

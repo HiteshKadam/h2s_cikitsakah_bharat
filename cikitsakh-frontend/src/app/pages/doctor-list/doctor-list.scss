@@ -1,9 +1,22 @@
 .doctor-card {
   cursor: pointer;
-  transition: 0.2s ease;
+  transition: all 0.3s ease;
+  border-radius: 15px;
+  border: 1px solid transparent;
+
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(115, 0, 255, 0.15);
+    border: 1px solid rgba(146, 73, 255, 0.2);
+  }
 }
 
-.doctor-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+.card-title {
+  color: #593196;
+  font-weight: 600;
+}
+
+.card-text {
+  color: #666;
+  line-height: 1.8;
 }
