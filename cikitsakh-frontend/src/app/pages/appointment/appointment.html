@@ -1,201 +1,436 @@
-<div class="container mt-5">
-  
-  <button class="btn btn-outline-secondary mb-3" (click)="goBack()">
-    ← Back
-  </button>
-
-  <div class="card shadow" *ngIf="!loading && doctor">
-    <div class="card-body">
-      
-      <h3 class="mb-4">📅 Book Appointment</h3>
-
-      <div class="doctor-info mb-4 p-3 bg-light rounded">
-        <h4 *ngIf="careType === 'human'">Dr. {{ doctor.first_name }} {{ doctor.last_name }}</h4>
-        <h4 *ngIf="careType === 'pet'">{{ doctor.name }}</h4>
-        
-        <p class="mb-1" *ngIf="careType === 'human'">
-          <strong>Specialization:</strong> {{ doctor.specialization }}
-        </p>
-        <p class="mb-1" *ngIf="careType === 'pet'">
-          <strong>Specialty:</strong> {{ doctor.specialty }}
-        </p>
-        
-        <p class="mb-1" *ngIf="careType === 'human'">
-          <strong>Experience:</strong> {{ doctor.years_experience }} years
-        </p>
-        <p class="mb-1" *ngIf="careType === 'pet'">
-          <strong>Experience:</strong> {{ doctor.experience }} years
-        </p>
-        
-        <p class="mb-1" *ngIf="careType === 'human' && doctor.address_details">
-          <strong>Location:</strong> {{ doctor.address_details.city }}, {{ doctor.address_details.state }}
-        </p>
-        <p class="mb-1" *ngIf="careType === 'pet' && doctor.address">
-          <strong>Location:</strong> {{ doctor.address }}
-        </p>
-        
-        <p class="mb-1" *ngIf="careType === 'pet' && doctor.clinic_name">
-          <strong>Clinic:</strong> {{ doctor.clinic_name }}
-        </p>
-        
-        <p class="mb-0" *ngIf="doctor.open_time_1 && doctor.close_time_1">
-          <strong>Hours:</strong> {{ doctor.open_time_1 }} - {{ doctor.close_time_1 }}
-        </p>
-      </div>
-
-      <form>
-        
-        <!-- Human Patient Fields -->
-        <div *ngIf="careType === 'human'">
-          <h5 class="mb-3">Patient Information</h5>
-          
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <label class="form-label">First Name <span class="text-danger">*</span></label>
-              <input type="text" class="form-control" [(ngModel)]="patientFirstName" name="patientFirstName" required>
-            </div>
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Last Name <span class="text-danger">*</span></label>
-              <input type="text" class="form-control" [(ngModel)]="patientLastName" name="patientLastName" required>
-            </div>
-          </div>
-
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Contact Number <span class="text-danger">*</span></label>
-              <input type="tel" class="form-control" [(ngModel)]="contactNumber" name="contactNumber" required>
-            </div>
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Email</label>
-              <input type="email" class="form-control" [(ngModel)]="email" name="email">
-            </div>
-          </div>
-
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Date of Birth</label>
-              <input type="date" class="form-control" [(ngModel)]="dateOfBirth" name="dateOfBirth">
-            </div>
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Age</label>
-              <input type="number" class="form-control" [(ngModel)]="age" name="age" min="0" max="150">
-            </div>
-          </div>
-        </div>
-
-        <!-- Pet Fields -->
-        <div *ngIf="careType === 'pet'">
-          <h5 class="mb-3">Owner Information</h5>
-          
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Owner Name <span class="text-danger">*</span></label>
-              <input type="text" class="form-control" [(ngModel)]="ownerName" name="ownerName" required>
-            </div>
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Owner Phone <span class="text-danger">*</span></label>
-              <input type="tel" class="form-control" [(ngModel)]="ownerPhone" name="ownerPhone" required>
-            </div>
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label">Owner Email</label>
-            <input type="email" class="form-control" [(ngModel)]="ownerEmail" name="ownerEmail">
-          </div>
-
-          <h5 class="mb-3 mt-4">Pet Information</h5>
-          
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Pet Name <span class="text-danger">*</span></label>
-              <input type="text" class="form-control" [(ngModel)]="animalName" name="animalName" required>
-            </div>
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Species <span class="text-danger">*</span></label>
-              <select class="form-select" [(ngModel)]="species" name="species" required>
-                <option value="">Select Species</option>
-                <option value="Dog">Dog</option>
-                <option value="Cat">Cat</option>
-                <option value="Bird">Bird</option>
-                <option value="Rabbit">Rabbit</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="row">
-            <div class="col-md-4 mb-3">
-              <label class="form-label">Breed</label>
-              <input type="text" class="form-control" [(ngModel)]="breed" name="breed">
-            </div>
-            <div class="col-md-4 mb-3">
-              <label class="form-label">Age (years)</label>
-              <input type="number" class="form-control" [(ngModel)]="animalAge" name="animalAge" min="0" max="50">
-            </div>
-            <div class="col-md-4 mb-3">
-              <label class="form-label">Gender</label>
-              <select class="form-select" [(ngModel)]="animalGender" name="animalGender">
-                <option value="">Select</option>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label">Weight (kg)</label>
-            <input type="number" class="form-control" [(ngModel)]="weight" name="weight" min="0" step="0.1">
-          </div>
-        </div>
-
-        <!-- Appointment Details -->
-        <h5 class="mb-3 mt-4">Appointment Details</h5>
-
-        <div class="row">
-          <div class="col-md-6 mb-3">
-            <label class="form-label">Appointment Date <span class="text-danger">*</span></label>
-            <input type="date" class="form-control" [(ngModel)]="appointmentDate" name="appointmentDate" 
-              (change)="onDateChange()" required [min]="appointmentDate">
-          </div>
-          <div class="col-md-6 mb-3">
-            <label class="form-label">Preferred Time <span class="text-danger">*</span></label>
-            <select class="form-select" [(ngModel)]="appointmentTime" name="appointmentTime" required
-              [disabled]="loadingSlots">
-              <option value="">{{ loadingSlots ? 'Loading slots...' : 'Select Time' }}</option>
-              <option *ngFor="let slot of availableSlots" [value]="slot.time" [disabled]="!slot.available">
-                {{ slot.display }} {{ !slot.available ? '(Booked)' : '' }}
-              </option>
-            </select>
-          </div>
-        </div>
-
-        <div class="mb-3">
-          <label class="form-label">Reason for Visit / Symptoms</label>
-          <textarea class="form-control" [(ngModel)]="reason" name="reason" rows="3" 
-            placeholder="Describe your symptoms or reason for visit"></textarea>
-        </div>
-
-        <button type="button" class="btn btn-primary w-100" (click)="confirmBooking()"
-          [disabled]="submitting || !validateForm()">
-          <span *ngIf="!submitting">Confirm Booking</span>
-          <span *ngIf="submitting">
-            <span class="spinner-border spinner-border-sm me-2"></span>
-            Booking...
-          </span>
-        </button>
-
-      </form>
-
+<div class="appointment-container">
+  <!-- Header -->
+  <div class="header-section">
+    <div class="container-fluid">
+      <button class="btn btn-back" (click)="goBack()">
+        <i class="fas fa-arrow-left me-2"></i>Back to Search
+      </button>
     </div>
   </div>
 
-  <div class="text-center" *ngIf="loading">
-    <div class="spinner-border text-primary"></div>
-    <p class="mt-2">Loading doctor details...</p>
-  </div>
+  <!-- Main Content -->
+  <div class="container-fluid main-content">
+    <div class="row justify-content-center">
+      <div class="col-lg-10 col-xl-8">
 
-  <div class="alert alert-danger mt-4" *ngIf="!loading && !doctor">
-    Doctor not found.
-  </div>
+        <!-- Loading State -->
+        <div class="loading-state" *ngIf="loading">
+          <div class="loading-card">
+            <div class="spinner-container">
+              <div class="spinner"></div>
+            </div>
+            <h4>Loading Doctor Details...</h4>
+            <p>Please wait while we fetch the doctor's information</p>
+          </div>
+        </div>
 
+        <!-- Error State -->
+        <div class="error-state" *ngIf="!loading && !doctor">
+          <div class="error-card">
+            <div class="error-icon">
+              <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h4>Doctor Not Found</h4>
+            <p>The doctor you're looking for could not be found.</p>
+            <button class="btn btn-primary" (click)="goBack()">Search Again</button>
+          </div>
+        </div>
+
+        <!-- Booking Form -->
+        <div class="booking-form" *ngIf="!loading && doctor">
+          <!-- Progress Steps -->
+          <div class="progress-steps">
+            <div class="step" [class.active]="true">
+              <div class="step-number">1</div>
+              <div class="step-label">Doctor Info</div>
+            </div>
+            <div class="step-connector"></div>
+            <div class="step" [class.active]="true">
+              <div class="step-number">2</div>
+              <div class="step-label">Patient Details</div>
+            </div>
+            <div class="step-connector"></div>
+            <div class="step" [class.active]="true">
+              <div class="step-number">3</div>
+              <div class="step-label">Appointment</div>
+            </div>
+          </div>
+
+          <!-- Doctor Information Card -->
+          <div class="doctor-card">
+            <div class="doctor-header">
+              <div class="doctor-avatar">
+                <i class="fas fa-user-md" *ngIf="careType === 'human'"></i>
+                <i class="fas fa-heartbeat" *ngIf="careType === 'pet'"></i>
+              </div>
+              <div class="doctor-info">
+                <h3 *ngIf="careType === 'human'">Dr. {{ doctor.first_name }} {{ doctor.last_name }}</h3>
+                <h3 *ngIf="careType === 'pet'">{{ doctor.name }}</h3>
+                <p class="specialization">
+                  <i class="fas fa-stethoscope me-2"></i>
+                  <span *ngIf="careType === 'human'">{{ doctor.specialization }}</span>
+                  <span *ngIf="careType === 'pet'">{{ doctor.specialty }}</span>
+                </p>
+              </div>
+            </div>
+
+            <div class="doctor-details">
+              <div class="detail-item">
+                <i class="fas fa-calendar-check"></i>
+                <span *ngIf="careType === 'human'">{{ doctor.years_experience }} years experience</span>
+                <span *ngIf="careType === 'pet'">{{ doctor.experience }} years experience</span>
+              </div>
+
+              <div class="detail-item" *ngIf="doctor.open_time_1 && doctor.close_time_1">
+                <i class="fas fa-clock"></i>
+                <span>{{ doctor.open_time_1 }} - {{ doctor.close_time_1 }}</span>
+              </div>
+
+              <div class="detail-item">
+                <i class="fas fa-map-marker-alt"></i>
+                <span *ngIf="careType === 'human' && doctor.address_details">
+                  {{ doctor.address_details.city }}, {{ doctor.address_details.state }}
+                </span>
+                <span *ngIf="careType === 'pet' && doctor.address">
+                  {{ doctor.address }}
+                </span>
+              </div>
+
+              <div class="detail-item" *ngIf="careType === 'pet' && doctor.clinic_name">
+                <i class="fas fa-building"></i>
+                <span>{{ doctor.clinic_name }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Booking Form -->
+          <form class="appointment-form" #bookingForm="ngForm">
+
+            <!-- Human Patient Section -->
+            <div class="form-section" *ngIf="careType === 'human'">
+              <div class="section-header">
+                <h4><i class="fas fa-user me-2"></i>Patient Information</h4>
+                <p>Please provide your personal details</p>
+              </div>
+
+              <div class="form-grid">
+                <div class="form-group">
+                  <label class="form-label">
+                    First Name <span class="required">*</span>
+                  </label>
+                  <div class="input-wrapper">
+                    <i class="fas fa-user input-icon"></i>
+                    <input type="text" class="form-input" [(ngModel)]="patientFirstName"
+                           name="patientFirstName" required #firstName="ngModel"
+                           placeholder="Enter first name">
+                  </div>
+                  <div class="error-message" *ngIf="firstName.invalid && firstName.touched">
+                    First name is required
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">
+                    Last Name <span class="required">*</span>
+                  </label>
+                  <div class="input-wrapper">
+                    <i class="fas fa-user input-icon"></i>
+                    <input type="text" class="form-input" [(ngModel)]="patientLastName"
+                           name="patientLastName" required #lastName="ngModel"
+                           placeholder="Enter last name">
+                  </div>
+                  <div class="error-message" *ngIf="lastName.invalid && lastName.touched">
+                    Last name is required
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">
+                    Phone Number <span class="required">*</span>
+                  </label>
+                  <div class="input-wrapper">
+                    <i class="fas fa-phone input-icon"></i>
+                    <input type="tel" class="form-input" [(ngModel)]="contactNumber"
+                           name="contactNumber" required #phone="ngModel"
+                           placeholder="Enter phone number">
+                  </div>
+                  <div class="error-message" *ngIf="phone.invalid && phone.touched">
+                    Phone number is required
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Email Address</label>
+                  <div class="input-wrapper">
+                    <i class="fas fa-envelope input-icon"></i>
+                    <input type="email" class="form-input" [(ngModel)]="email"
+                           name="email" email #emailField="ngModel"
+                           placeholder="Enter email address">
+                  </div>
+                  <div class="error-message" *ngIf="emailField.invalid && emailField.touched">
+                    Please enter a valid email address
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Date of Birth</label>
+                  <div class="input-wrapper">
+                    <i class="fas fa-calendar input-icon"></i>
+                    <input type="date" class="form-input" [(ngModel)]="dateOfBirth"
+                           name="dateOfBirth" #dob="ngModel">
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Age</label>
+                  <div class="input-wrapper">
+                    <i class="fas fa-birthday-cake input-icon"></i>
+                    <input type="number" class="form-input" [(ngModel)]="age"
+                           name="age" min="0" max="150" placeholder="Enter age">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Pet Owner & Animal Section -->
+            <div class="form-section" *ngIf="careType === 'pet'">
+              <div class="section-header">
+                <h4><i class="fas fa-user-friends me-2"></i>Owner Information</h4>
+                <p>Please provide your contact details</p>
+              </div>
+
+              <div class="form-grid">
+                <div class="form-group">
+                  <label class="form-label">
+                    Owner Name <span class="required">*</span>
+                  </label>
+                  <div class="input-wrapper">
+                    <i class="fas fa-user input-icon"></i>
+                    <input type="text" class="form-input" [(ngModel)]="ownerName"
+                           name="ownerName" required #ownerNameField="ngModel"
+                           placeholder="Enter owner name">
+                  </div>
+                  <div class="error-message" *ngIf="ownerNameField.invalid && ownerNameField.touched">
+                    Owner name is required
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">
+                    Phone Number <span class="required">*</span>
+                  </label>
+                  <div class="input-wrapper">
+                    <i class="fas fa-phone input-icon"></i>
+                    <input type="tel" class="form-input" [(ngModel)]="ownerPhone"
+                           name="ownerPhone" required #ownerPhoneField="ngModel"
+                           placeholder="Enter phone number">
+                  </div>
+                  <div class="error-message" *ngIf="ownerPhoneField.invalid && ownerPhoneField.touched">
+                    Phone number is required
+                  </div>
+                </div>
+
+                <div class="form-group full-width">
+                  <label class="form-label">Email Address</label>
+                  <div class="input-wrapper">
+                    <i class="fas fa-envelope input-icon"></i>
+                    <input type="email" class="form-input" [(ngModel)]="ownerEmail"
+                           name="ownerEmail" email #ownerEmailField="ngModel"
+                           placeholder="Enter email address">
+                  </div>
+                  <div class="error-message" *ngIf="ownerEmailField.invalid && ownerEmailField.touched">
+                    Please enter a valid email address
+                  </div>
+                </div>
+              </div>
+
+              <div class="section-header mt-4">
+                <h4><i class="fas fa-paw me-2"></i>Pet Information</h4>
+                <p>Please provide your pet's details</p>
+              </div>
+
+              <div class="form-grid">
+                <div class="form-group">
+                  <label class="form-label">
+                    Pet Name <span class="required">*</span>
+                  </label>
+                  <div class="input-wrapper">
+                    <i class="fas fa-heart input-icon"></i>
+                    <input type="text" class="form-input" [(ngModel)]="animalName"
+                           name="animalName" required #animalNameField="ngModel"
+                           placeholder="Enter pet name">
+                  </div>
+                  <div class="error-message" *ngIf="animalNameField.invalid && animalNameField.touched">
+                    Pet name is required
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">
+                    Species <span class="required">*</span>
+                  </label>
+                  <div class="input-wrapper">
+                    <i class="fas fa-paw input-icon"></i>
+                    <select class="form-input" [(ngModel)]="species" name="species"
+                            required #speciesField="ngModel">
+                      <option value="">Select Species</option>
+                      <option value="Dog">🐕 Dog</option>
+                      <option value="Cat">🐱 Cat</option>
+                      <option value="Bird">🐦 Bird</option>
+                      <option value="Rabbit">🐰 Rabbit</option>
+                      <option value="Hamster">🐹 Hamster</option>
+                      <option value="Fish">🐠 Fish</option>
+                      <option value="Other">❓ Other</option>
+                    </select>
+                  </div>
+                  <div class="error-message" *ngIf="speciesField.invalid && speciesField.touched">
+                    Please select a species
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Breed</label>
+                  <div class="input-wrapper">
+                    <i class="fas fa-dna input-icon"></i>
+                    <input type="text" class="form-input" [(ngModel)]="breed"
+                           name="breed" placeholder="Enter breed (optional)">
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Age (years)</label>
+                  <div class="input-wrapper">
+                    <i class="fas fa-birthday-cake input-icon"></i>
+                    <input type="number" class="form-input" [(ngModel)]="animalAge"
+                           name="animalAge" min="0" max="50" placeholder="Enter age">
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Gender</label>
+                  <div class="input-wrapper">
+                    <i class="fas fa-venus-mars input-icon"></i>
+                    <select class="form-input" [(ngModel)]="animalGender" name="animalGender">
+                      <option value="">Select Gender</option>
+                      <option value="Male">♂️ Male</option>
+                      <option value="Female">♀️ Female</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Weight (kg)</label>
+                  <div class="input-wrapper">
+                    <i class="fas fa-weight input-icon"></i>
+                    <input type="number" class="form-input" [(ngModel)]="weight"
+                           name="weight" min="0" step="0.1" placeholder="Enter weight">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Appointment Details Section -->
+            <div class="form-section">
+              <div class="section-header">
+                <h4><i class="fas fa-calendar-alt me-2"></i>Appointment Details</h4>
+                <p>Choose your preferred date and time</p>
+              </div>
+
+              <div class="form-grid">
+                <div class="form-group">
+                  <label class="form-label">
+                    Appointment Date <span class="required">*</span>
+                  </label>
+                  <div class="input-wrapper">
+                    <i class="fas fa-calendar input-icon"></i>
+                    <input type="date" class="form-input" [(ngModel)]="appointmentDate"
+                           name="appointmentDate" required #appointmentDateField="ngModel"
+                           (change)="onDateChange()" [min]="getMinDate()">
+                  </div>
+                  <div class="error-message" *ngIf="appointmentDateField.invalid && appointmentDateField.touched">
+                    Please select an appointment date
+                  </div>
+                </div>
+
+                <div class="form-group" *ngIf="careType === 'human'">
+                  <label class="form-label">
+                    Preferred Time <span class="required">*</span>
+                  </label>
+                  <div class="input-wrapper">
+                    <i class="fas fa-clock input-icon"></i>
+                    <select class="form-input" [(ngModel)]="appointmentTime" name="appointmentTime"
+                            required #appointmentTimeField="ngModel" [disabled]="loadingSlots">
+                      <option value="">
+                        <span *ngIf="loadingSlots">⏳ Loading available slots...</span>
+                        <span *ngIf="!loadingSlots">🕐 Select preferred time</span>
+                      </option>
+                      <option *ngFor="let slot of availableSlots" [value]="slot.time"
+                              [disabled]="!slot.available">
+                        <span [class]="slot.available ? 'available' : 'booked'">
+                          {{ slot.display }}
+                          <span *ngIf="!slot.available"> (❌ Booked)</span>
+                        </span>
+                      </option>
+                    </select>
+                  </div>
+                  <div class="error-message" *ngIf="appointmentTimeField.invalid && appointmentTimeField.touched">
+                    Please select a time slot
+                  </div>
+                  <div class="help-text" *ngIf="availableSlots.length > 0">
+                    <i class="fas fa-info-circle me-1"></i>
+                    {{ getAvailableSlotsCount() }} slots available for this date
+                  </div>
+                </div>
+
+                <div class="form-group full-width" *ngIf="careType === 'pet'">
+                  <div class="pet-notice">
+                    <i class="fas fa-info-circle notice-icon"></i>
+                    <div class="notice-content">
+                      <h6>Full Day Appointment</h6>
+                      <p>Veterinary appointments are scheduled for the entire day. The doctor will contact you to confirm the exact time.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-group full-width">
+                <label class="form-label">
+                  Reason for Visit / Symptoms
+                  <span class="optional">(Optional)</span>
+                </label>
+                <div class="input-wrapper">
+                  <i class="fas fa-comment-medical input-icon"></i>
+                  <textarea class="form-input textarea" [(ngModel)]="reason" name="reason"
+                            rows="4" placeholder="Please describe your symptoms, concerns, or reason for visit. This helps the doctor prepare for your appointment."></textarea>
+                </div>
+              </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="form-actions">
+              <button type="button" class="btn btn-primary btn-submit"
+                      (click)="confirmBooking()" [disabled]="submitting || !validateForm()">
+                <span *ngIf="!submitting">
+                  <i class="fas fa-calendar-check me-2"></i>
+                  Confirm Booking
+                </span>
+                <span *ngIf="submitting">
+                  <div class="spinner"></div>
+                  Processing Booking...
+                </span>
+              </button>
+
+              <p class="terms-text">
+                <i class="fas fa-shield-alt me-1"></i>
+                By booking this appointment, you agree to our terms and conditions.
+                We'll send a confirmation SMS and email with appointment details.
+              </p>
+            </div>
+
+          </form>
+        </div>
+
+      </div>
+    </div>
+  </div>
 </div>

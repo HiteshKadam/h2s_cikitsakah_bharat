@@ -15,7 +15,7 @@ urlpatterns = [
     # Appointment endpoints
     path('appointments/human/create/', views.create_human_appointment, name='create-human-appointment'),
     path('appointments/animal/create/', views.create_animal_appointment, name='create-animal-appointment'),
-    path('appointments/<int:appointment_id>/', views.get_appointment_details, name='appointment-details'),
+    path('appointments/<str:appointment_id>/', views.get_appointment_details, name='appointment-details'),
     
     # Doctor details
     path('doctors/<int:doctor_id>/', views.get_doctor_details, name='doctor-details'),

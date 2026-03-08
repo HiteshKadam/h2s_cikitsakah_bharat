@@ -1,26 +1,30 @@
 from rest_framework import serializers
 from .models import (
     HumanDoctor, VetDoctor, Patient, Animal, 
-    Address, Gender, HumanAppointment, AnimalAppointment
+    Address, Gender, HumanAppointment, AnimalAppointment, Owner
 )
 
 
 class AddressSerializer(serializers.ModelSerializer):
+    address_id = serializers.CharField(read_only=True)
+    
     class Meta:
         model = Address
         fields = ['address_id', 'address', 'city', 'state']
 
 
 class GenderSerializer(serializers.ModelSerializer):
+    gender_id = serializers.CharField(read_only=True)
+    
     class Meta:
         model = Gender
         fields = ['gender_id', 'name']
 
 
 class HumanDoctorSerializer(serializers.ModelSerializer):
-    address_details = AddressSerializer(source='address', read_only=True)
-    gender_name = serializers.CharField(source='gender.name', read_only=True)
-    distance = serializers.FloatField(read_only=True)
+    address_details = serializers.SerializerMethodField()
+    gender_name = serializers.SerializerMethodField()
+    distance = serializers.FloatField(read_only=True, required=False)
     
     class Meta:
         model = HumanDoctor
@@ -30,6 +34,27 @@ class HumanDoctorSerializer(serializers.ModelSerializer):
             'open_time_1', 'close_time_1', 'open_time_2',
             'gender_name', 'address_details', 'distance'
         ]
+    
+    def get_address_details(self, obj):
+        if obj.address:
+            try:
+                return {
+                    'address_id': str(obj.address.address_id),
+                    'address': obj.address.address,
+                    'city': obj.address.city,
+                    'state': obj.address.state
+                }
+            except:
+                return None
+        return None
+    
+    def get_gender_name(self, obj):
+        if obj.gender:
+            try:
+                return obj.gender.name
+            except:
+                return None
+        return None
 
 
 class VetDoctorSerializer(serializers.ModelSerializer):
@@ -46,8 +71,8 @@ class VetDoctorSerializer(serializers.ModelSerializer):
 
 
 class PatientSerializer(serializers.ModelSerializer):
-    address_details = AddressSerializer(source='address', read_only=True)
-    gender_name = serializers.CharField(source='gender.name', read_only=True)
+    address_details = serializers.SerializerMethodField()
+    gender_name = serializers.SerializerMethodField()
     
     class Meta:
         model = Patient
@@ -56,6 +81,27 @@ class PatientSerializer(serializers.ModelSerializer):
             'contact_number', 'email_id', 'registration_date',
             'gender_name', 'address_details'
         ]
+    
+    def get_address_details(self, obj):
+        if obj.address:
+            try:
+                return {
+                    'address_id': str(obj.address.address_id),
+                    'address': obj.address.address,
+                    'city': obj.address.city,
+                    'state': obj.address.state
+                }
+            except:
+                return None
+        return None
+    
+    def get_gender_name(self, obj):
+        if obj.gender:
+            try:
+                return obj.gender.name
+            except:
+                return None
+        return None
 
 
 class AnimalSerializer(serializers.ModelSerializer):
@@ -118,7 +164,7 @@ class CreateHumanAppointmentSerializer(serializers.Serializer):
 
 class CreateAnimalAppointmentSerializer(serializers.Serializer):
     """Serializer for creating animal appointments"""
-    doctor_id = serializers.IntegerField(required=True)
+    doctor_id = serializers.CharField(max_length=50, required=True)
     owner_name = serializers.CharField(max_length=100, required=True)
     owner_phone = serializers.CharField(max_length=20, required=True)
     owner_email = serializers.EmailField(required=False, allow_blank=True)

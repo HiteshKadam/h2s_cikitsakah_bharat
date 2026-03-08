@@ -2,7 +2,7 @@ from django.db import models
 
 
 class Gender(models.Model):
-    gender_id = models.AutoField(primary_key=True)
+    gender_id = models.CharField(max_length=50, primary_key=True)
     name = models.CharField(max_length=50)
 
     class Meta:
@@ -14,7 +14,7 @@ class Gender(models.Model):
 
 
 class Address(models.Model):
-    address_id = models.AutoField(primary_key=True)
+    address_id = models.CharField(max_length=50, primary_key=True)
     address = models.TextField(null=True, blank=True)
     city = models.CharField(max_length=100, null=True, blank=True)
     state = models.CharField(max_length=100, null=True, blank=True)
@@ -28,7 +28,7 @@ class Address(models.Model):
 
 
 class Patient(models.Model):
-    patient_id = models.AutoField(primary_key=True)
+    patient_id = models.CharField(max_length=50, primary_key=True)
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
     date_of_birth = models.DateField(null=True, blank=True)
@@ -60,7 +60,7 @@ class HumanDoctor(models.Model):
     open_time_1 = models.TimeField(null=True, blank=True)
     close_time_1 = models.TimeField(null=True, blank=True)
     open_time_2 = models.TimeField(null=True, blank=True)
-    # close_time_2 = models.TimeField(null=True, blank=True)
+    close_time_2 = models.TimeField(null=True, blank=True)
 
     class Meta:
         db_table = 'human_doctors'
@@ -71,7 +71,7 @@ class HumanDoctor(models.Model):
 
 
 class Owner(models.Model):
-    owner_id = models.AutoField(primary_key=True)
+    owner_id = models.CharField(max_length=50, primary_key=True)
     owner_name = models.CharField(max_length=100)
     phone = models.CharField(max_length=20, null=True, blank=True)
     email = models.EmailField(null=True, blank=True)
@@ -86,7 +86,7 @@ class Owner(models.Model):
 
 
 class Animal(models.Model):
-    animal_id = models.AutoField(primary_key=True)
+    animal_id = models.CharField(max_length=50, primary_key=True)
     animal_name = models.CharField(max_length=100)
     species = models.CharField(max_length=100, null=True, blank=True)
     breed = models.CharField(max_length=100, null=True, blank=True)
@@ -104,7 +104,7 @@ class Animal(models.Model):
 
 
 class VetDoctor(models.Model):
-    doctor_id = models.AutoField(primary_key=True)
+    doctor_id = models.CharField(max_length=50, primary_key=True)
     name = models.CharField(max_length=100)
     specialty = models.CharField(max_length=100, null=True, blank=True)
     clinic_name = models.CharField(max_length=200, null=True, blank=True)
@@ -126,7 +126,7 @@ class VetDoctor(models.Model):
 
 
 class HumanAppointment(models.Model):
-    appointment_id = models.AutoField(primary_key=True)
+    appointment_id = models.CharField(max_length=50, primary_key=True)
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE, db_column='patient_id')
     doctor = models.ForeignKey(HumanDoctor, on_delete=models.CASCADE, db_column='doctor_id')
     scheduling_date = models.DateField()
@@ -137,11 +137,11 @@ class HumanAppointment(models.Model):
     appointment_duration = models.IntegerField(null=True, blank=True)
     start_time = models.TimeField(null=True, blank=True)
     end_time = models.TimeField(null=True, blank=True)
-    waiting_timr = models.IntegerField(null=True, blank=True)
+    waiting_time = models.IntegerField(null=True, blank=True)
     age = models.IntegerField(null=True, blank=True)
 
     class Meta:
-        db_table = 'appointment'
+        db_table = 'human_appointments'
         managed = False
 
     def __str__(self):
@@ -149,14 +149,14 @@ class HumanAppointment(models.Model):
 
 
 class AnimalAppointment(models.Model):
-    appointment_id = models.AutoField(primary_key=True)
+    appointment_id = models.CharField(max_length=50, primary_key=True)
     doctor = models.ForeignKey(VetDoctor, on_delete=models.CASCADE, db_column='doctor_id')
     animal = models.ForeignKey(Animal, on_delete=models.CASCADE, db_column='animal_id')
     appointment_date = models.DateField()
     status = models.CharField(max_length=50, null=True, blank=True)
 
     class Meta:
-        db_table = 'appointment'
+        db_table = 'animal_appointments'
         managed = False
 
     def __str__(self):

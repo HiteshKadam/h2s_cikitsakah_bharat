@@ -2,9 +2,10 @@ from django.shortcuts import render
 from rest_framework import viewsets, status
 from rest_framework.decorators import api_view, action
 from rest_framework.response import Response
-from django.db.models import Q
+from django.db.models import Q, Max
+from django.db import models
 from math import radians, cos, sin, asin, sqrt
-from .models import HumanDoctor, VetDoctor, Patient, Animal, Address
+from .models import HumanDoctor, VetDoctor, Patient, Animal, Address, HumanAppointment, AnimalAppointment, Owner, Gender
 from .serializers import (
     HumanDoctorSerializer, VetDoctorSerializer,
     PatientSerializer, AnimalSerializer
@@ -565,7 +566,7 @@ def search_doctors_by_symptoms(request):
 @api_view(['POST'])
 def create_human_appointment(request):
     """
-    Create a new appointment for human patient
+    Create a new appointment for human patient with slot validation
     """
     from .serializers import CreateHumanAppointmentSerializer, AppointmentDetailSerializer
     from datetime import datetime
@@ -583,6 +584,27 @@ def create_human_appointment(request):
     try:
         # Check if doctor exists
         doctor = HumanDoctor.objects.get(doctor_id=data['doctor_id'])
+        
+        # Validate slot availability
+        existing_appointment = HumanAppointment.objects.filter(
+            doctor=doctor,
+            scheduling_date=data['scheduling_date'],
+            scheduling_time=data['scheduling_time'],
+            status__in=['scheduled', 'confirmed']
+        ).first()
+        
+        if existing_appointment:
+            return Response(
+                {
+                    'error': 'Slot not available',
+                    'message': f'This time slot is already booked. Please select another time.',
+                    'booked_slot': {
+                        'date': str(data['scheduling_date']),
+                        'time': str(data['scheduling_time'])
+                    }
+                },
+                status=status.HTTP_409_CONFLICT
+            )
         
         # Create or get patient
         patient, created = Patient.objects.get_or_create(
@@ -615,7 +637,13 @@ def create_human_appointment(request):
             'message': 'Appointment booked successfully',
             'appointment': response_serializer.data,
             'appointment_id': appointment.appointment_id,
-            'patient_created': created
+            'patient_created': created,
+            'booking_details': {
+                'doctor_name': f"Dr. {doctor.first_name} {doctor.last_name}",
+                'patient_name': f"{patient.first_name} {patient.last_name}",
+                'date': str(data['scheduling_date']),
+                'time': str(data['scheduling_time'])
+            }
         }, status=status.HTTP_201_CREATED)
         
     except HumanDoctor.DoesNotExist:
@@ -633,10 +661,11 @@ def create_human_appointment(request):
 @api_view(['POST'])
 def create_animal_appointment(request):
     """
-    Create a new appointment for animal patient
+    Create a new appointment for animal patient with slot validation
     """
     from .serializers import CreateAnimalAppointmentSerializer
     from .models import Owner
+    from datetime import datetime, time
     
     serializer = CreateAnimalAppointmentSerializer(data=request.data)
     
@@ -651,6 +680,24 @@ def create_animal_appointment(request):
     try:
         # Check if vet doctor exists
         doctor = VetDoctor.objects.get(doctor_id=data['doctor_id'])
+        
+        # For animal appointments, we need to add time field to the model
+        # For now, we'll check if there's already an appointment on the same date
+        existing_appointment = AnimalAppointment.objects.filter(
+            doctor=doctor,
+            appointment_date=data['appointment_date'],
+            status__in=['scheduled', 'confirmed']
+        ).first()
+        
+        if existing_appointment:
+            return Response(
+                {
+                    'error': 'Slot not available',
+                    'message': f'This date already has an appointment booked. Please select another date.',
+                    'booked_date': str(data['appointment_date'])
+                },
+                status=status.HTTP_409_CONFLICT
+            )
         
         # Create or get owner
         owner, owner_created = Owner.objects.get_or_create(
@@ -688,6 +735,13 @@ def create_animal_appointment(request):
             'appointment_id': appointment.appointment_id,
             'owner_created': owner_created,
             'animal_created': animal_created,
+            'booking_details': {
+                'doctor_name': doctor.name,
+                'animal_name': animal.animal_name,
+                'owner_name': owner.owner_name,
+                'date': str(data['appointment_date']),
+                'clinic': doctor.clinic_name or 'N/A'
+            },
             'appointment': {
                 'appointment_id': appointment.appointment_id,
                 'appointment_date': appointment.appointment_date,
@@ -808,7 +862,7 @@ def get_available_slots(request, doctor_id):
                 end_time = datetime.strptime('17:00', '%H:%M').time()
             
             # Get existing appointments for this date
-            existing_appointments = HumanAppointment.objects.filter(
+            booked_times = HumanAppointment.objects.filter(
                 doctor=doctor,
                 scheduling_date=appointment_date,
                 status__in=['scheduled', 'confirmed']
@@ -824,11 +878,11 @@ def get_available_slots(request, doctor_id):
                 start_time = datetime.strptime('09:00', '%H:%M').time()
                 end_time = datetime.strptime('17:00', '%H:%M').time()
             
-            existing_appointments = AnimalAppointment.objects.filter(
+            has_appointment = AnimalAppointment.objects.filter(
                 doctor=doctor,
                 appointment_date=appointment_date,
                 status__in=['scheduled', 'confirmed']
-            ).values_list('appointment_date', flat=True)
+            ).exists()  # Check if any appointment exists on this date
         
         # Generate time slots (30-minute intervals)
         slots = []
@@ -837,7 +891,10 @@ def get_available_slots(request, doctor_id):
         
         while current_time < end_datetime:
             slot_time = current_time.time()
-            is_available = slot_time not in existing_appointments
+            if patient_type == 'human':
+                is_available = slot_time not in booked_times
+            else:
+                is_available = not has_appointment
             
             slots.append({
                 'time': slot_time.strftime('%H:%M'),
@@ -864,3 +921,312 @@ def get_available_slots(request, doctor_id):
             {'error': 'Invalid date format. Use YYYY-MM-DD'},
             status=status.HTTP_400_BAD_REQUEST
         )
+
+
+@api_view(['POST'])
+def create_human_appointment(request):
+    """
+    Create a new human appointment
+    """
+    from .serializers import CreateHumanAppointmentSerializer
+    
+    serializer = CreateHumanAppointmentSerializer(data=request.data)
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    data = serializer.validated_data
+    
+    try:
+        # Get or create patient
+        patient = Patient.objects.filter(
+            first_name=data['patient_first_name'],
+            last_name=data['patient_last_name'],
+            contact_number=data['contact_number']
+        ).first()
+        
+        if not patient:
+            # Generate patient_id
+            max_id = Patient.objects.aggregate(max_id=models.Max('patient_id'))['max_id']
+            if max_id:
+                # Extract number from 'PO52' format
+                try:
+                    num = int(max_id[2:]) + 1
+                except (ValueError, IndexError):
+                    num = 1
+            else:
+                num = 1
+            patient_id = f'PO{num:02d}'
+            
+            patient_defaults = {
+                'patient_id': patient_id,
+                'email_id': data.get('email_id', ''),
+                'date_of_birth': data.get('date_of_birth')
+            }
+            
+            if data.get('gender_id'):
+                try:
+                    gender = Gender.objects.get(gender_id=str(data['gender_id']))
+                    patient_defaults['gender'] = gender
+                except Gender.DoesNotExist:
+                    pass  # Skip if gender not found
+            
+            patient = Patient(**patient_defaults)
+            patient.first_name = data['patient_first_name']
+            patient.last_name = data['patient_last_name']
+            patient.contact_number = data['contact_number']
+            patient.save()
+        
+        # Get doctor
+        doctor = HumanDoctor.objects.get(doctor_id=data['doctor_id'])
+        
+        # Check if slot is available
+        existing_appointment = HumanAppointment.objects.filter(
+            doctor=doctor,
+            scheduling_date=data['scheduling_date'],
+            scheduling_time=data['scheduling_time'],
+            status__in=['scheduled', 'confirmed']
+        ).exists()
+        
+        if existing_appointment:
+            return Response(
+                {'error': 'This time slot is already booked'},
+                status=status.HTTP_409_CONFLICT
+            )
+        
+        # Create appointment
+        # Generate appointment_id
+        max_id = HumanAppointment.objects.aggregate(max_id=Max('appointment_id'))['max_id']
+        if max_id:
+            # Extract number from 'AP00146' format
+            try:
+                num = int(max_id[2:]) + 1
+            except (ValueError, IndexError):
+                num = 1
+        else:
+            num = 1
+        appointment_id = f'AP{num:05d}'
+        
+        appointment = HumanAppointment.objects.create(
+            appointment_id=appointment_id,
+            patient=patient,
+            doctor=doctor,
+            scheduling_date=data['scheduling_date'],
+            scheduling_time=data['scheduling_time'],
+            status='scheduled',
+            age=data.get('age')
+        )
+        
+        return Response({
+            'success': True,
+            'appointment_id': appointment.appointment_id,
+            'message': 'Appointment booked successfully'
+        }, status=status.HTTP_201_CREATED)
+        
+    except HumanDoctor.DoesNotExist:
+        return Response(
+            {'error': 'Doctor not found'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    except Exception as e:
+        return Response(
+            {'error': f'Failed to create appointment: {str(e)}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['POST'])
+def create_animal_appointment(request):
+    """
+    Create a new animal appointment
+    """
+    from .serializers import CreateAnimalAppointmentSerializer
+    
+    serializer = CreateAnimalAppointmentSerializer(data=request.data)
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    data = serializer.validated_data
+    
+    try:
+        # Get or create owner
+        owner = Owner.objects.filter(
+            owner_name=data['owner_name'],
+            phone=data['owner_phone']
+        ).first()
+        
+        if not owner:
+            # Generate owner_id
+            max_id = Owner.objects.aggregate(max_id=Max('owner_id'))['max_id']
+            if max_id:
+                # Extract number from 'O001' format
+                try:
+                    num = int(max_id[1:]) + 1
+                except (ValueError, IndexError):
+                    num = 1
+            else:
+                num = 1
+            owner_id = f'O{num:03d}'
+            
+            owner = Owner.objects.create(
+                owner_id=owner_id,
+                owner_name=data['owner_name'],
+                phone=data['owner_phone'],
+                email=data.get('owner_email', '')
+            )
+        
+        # Get or create animal
+        animal = Animal.objects.filter(
+            animal_name=data['animal_name'],
+            owner=owner
+        ).first()
+        
+        if not animal:
+            # Generate animal_id
+            max_id = Animal.objects.aggregate(max_id=Max('animal_id'))['max_id']
+            if max_id:
+                # Extract number from 'A001' format
+                try:
+                    num = int(max_id[1:]) + 1
+                except (ValueError, IndexError):
+                    num = 1
+            else:
+                num = 1
+            animal_id = f'A{num:03d}'
+            
+            animal = Animal.objects.create(
+                animal_id=animal_id,
+                animal_name=data['animal_name'],
+                owner=owner,
+                species=data['species'],
+                breed=data.get('breed', ''),
+                age=data.get('age'),
+                gender=data.get('gender', ''),
+                weight=data.get('weight')
+            )
+        
+        # Get doctor
+        doctor = VetDoctor.objects.get(doctor_id=data['doctor_id'])
+        
+        # Check if there's already an appointment on this date for this doctor
+        existing_appointment = AnimalAppointment.objects.filter(
+            doctor=doctor,
+            appointment_date=data['appointment_date'],
+            status__in=['scheduled', 'confirmed']
+        ).exists()
+        
+        if existing_appointment:
+            return Response(
+                {'error': 'This doctor already has an appointment on this date'},
+                status=status.HTTP_409_CONFLICT
+            )
+        
+        # Create appointment
+        # Generate appointment_id
+        max_id = AnimalAppointment.objects.aggregate(max_id=Max('appointment_id'))['max_id']
+        if max_id:
+            # Extract number from 'AP001' format
+            try:
+                num = int(max_id[2:]) + 1
+            except (ValueError, IndexError):
+                num = 1
+        else:
+            num = 1
+        appointment_id = f'AP{num:03d}'
+        
+        appointment = AnimalAppointment.objects.create(
+            appointment_id=appointment_id,
+            doctor=doctor,
+            animal=animal,
+            appointment_date=data['appointment_date'],
+            status='scheduled'
+        )
+        
+        return Response({
+            'success': True,
+            'appointment_id': appointment.appointment_id,
+            'message': 'Appointment booked successfully'
+        }, status=status.HTTP_201_CREATED)
+        
+    except VetDoctor.DoesNotExist:
+        return Response(
+            {'error': 'Doctor not found'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    except Exception as e:
+        return Response(
+            {'error': f'Failed to create appointment: {str(e)}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['GET'])
+def get_appointment_details(request, appointment_id):
+    """
+    Get details of a specific appointment
+    """
+    from .serializers import AppointmentDetailSerializer
+    
+    try:
+        # Try human appointment first
+        try:
+            appointment = HumanAppointment.objects.select_related(
+                'patient', 'doctor', 'doctor__address', 'doctor__gender'
+            ).get(appointment_id=appointment_id)
+            
+            serializer = AppointmentDetailSerializer(appointment)
+            data = serializer.data
+            data['appointment_type'] = 'human'
+            return Response(data)
+            
+        except HumanAppointment.DoesNotExist:
+            # Try animal appointment
+            appointment = AnimalAppointment.objects.select_related(
+                'animal', 'animal__owner', 'doctor'
+            ).get(appointment_id=appointment_id)
+            
+            # For animal appointments, we need to create a custom response
+            data = {
+                'appointment_id': appointment.appointment_id,
+                'appointment_date': appointment.appointment_date,
+                'status': appointment.status,
+                'appointment_type': 'animal',
+                'animal_details': {
+                    'animal_id': appointment.animal.animal_id,
+                    'animal_name': appointment.animal.animal_name,
+                    'species': appointment.animal.species,
+                    'breed': appointment.animal.breed,
+                    'age': appointment.animal.age,
+                    'gender': appointment.animal.gender,
+                    'weight': appointment.animal.weight,
+                    'owner': {
+                        'owner_id': appointment.animal.owner.owner_id,
+                        'owner_name': appointment.animal.owner.owner_name,
+                        'phone': appointment.animal.owner.phone,
+                        'email': appointment.animal.owner.email
+                    }
+                },
+                'doctor_details': {
+                    'doctor_id': appointment.doctor.doctor_id,
+                    'name': appointment.doctor.name,
+                    'specialty': appointment.doctor.specialty,
+                    'clinic_name': appointment.doctor.clinic_name,
+                    'experience': appointment.doctor.experience,
+                    'license_number': appointment.doctor.license_number,
+                    'phone': appointment.doctor.phone,
+                    'address': appointment.doctor.address
+                }
+            }
+            return Response(data)
+            
+    except AnimalAppointment.DoesNotExist:
+        return Response(
+            {'error': 'Appointment not found'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    except Exception as e:
+        return Response(
+            {'error': f'Failed to retrieve appointment: {str(e)}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+

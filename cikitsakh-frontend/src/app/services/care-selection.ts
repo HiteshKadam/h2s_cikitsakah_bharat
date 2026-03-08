@@ -9,9 +9,16 @@ export class CareSelectionService {
 
   setCareType(type: 'human' | 'pet') {
     this.careType = type;
+    localStorage.setItem('careType', type);
   }
 
   getCareType() {
+    if (!this.careType) {
+      const stored = localStorage.getItem('careType');
+      if (stored === 'human' || stored === 'pet') {
+        this.careType = stored;
+      }
+    }
     return this.careType;
   }
 }
