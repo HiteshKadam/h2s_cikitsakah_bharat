@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -66,33 +66,43 @@ export class Appointment implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private apiService: ApiService,
-    private careService: CareSelectionService
+    private careService: CareSelectionService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
+    console.log('Appointment component ngOnInit called');
     this.careType = this.careService.getCareType() as 'human' | 'pet';
     console.log('Care type from service:', this.careType);
 
-    this.route.params.subscribe(params => {
-      this.doctorId = +params['id'];
-      console.log('Doctor ID from route:', this.doctorId);
-
-      // If care type is not set, try to determine it from localStorage or URL
-      if (!this.careType) {
-        const storedCareType = localStorage.getItem('careType');
-        if (storedCareType === 'human' || storedCareType === 'pet') {
-          this.careType = storedCareType;
-          this.careService.setCareType(this.careType);
-          console.log('Care type restored from localStorage:', this.careType);
-        } else {
-          // If still no care type, redirect to home
-          console.error('No care type found, redirecting to home');
-          this.router.navigate(['/']);
-          return;
-        }
+    // If care type is not set, try to determine it from localStorage
+    if (!this.careType) {
+      const storedCareType = localStorage.getItem('careType');
+      if (storedCareType === 'human' || storedCareType === 'pet') {
+        this.careType = storedCareType;
+        this.careService.setCareType(this.careType);
+        console.log('Care type restored from localStorage:', this.careType);
+      } else {
+        // If still no care type, redirect to home
+        console.error('No care type found, redirecting to home');
+        this.router.navigate(['/']);
+        return;
       }
+    }
 
-      this.loadDoctorDetails();
+    this.route.params.subscribe(params => {
+      const doctorId = +params['id'];
+      console.log('Doctor ID from route params:', doctorId);
+      
+      if (doctorId && doctorId !== this.doctorId) {
+        console.log('New doctor ID detected, loading doctor details');
+        this.doctorId = doctorId;
+        this.loadDoctorDetails();
+      } else if (doctorId && !this.doctor) {
+        console.log('Same doctor ID, but no doctor data loaded yet');
+        this.doctorId = doctorId;
+        this.loadDoctorDetails();
+      }
     });
 
     // Set minimum date to today
@@ -100,6 +110,7 @@ export class Appointment implements OnInit {
   }
 
   loadDoctorDetails() {
+    console.log('loadDoctorDetails called with:', { doctorId: this.doctorId, careType: this.careType });
     if (!this.doctorId || !this.careType) {
       console.error('Missing doctorId or careType:', { doctorId: this.doctorId, careType: this.careType });
       this.loading = false;
@@ -108,13 +119,22 @@ export class Appointment implements OnInit {
     }
 
     this.loading = true;
-    console.log('Loading doctor details for:', { doctorId: this.doctorId, careType: this.careType });
+    console.log('Making API call to getDoctorDetails...');
 
     this.apiService.getDoctorDetails(this.doctorId, this.careType).subscribe({
       next: (response) => {
-        console.log('Doctor details response:', response);
+        console.log('API call successful, response:', response);
+        console.log('Setting doctor data:', response.doctor);
         this.doctor = response.doctor;
         this.loading = false;
+        console.log('Loading set to false, doctor data set');
+        console.log('Current state - loading:', this.loading, 'doctor:', !!this.doctor);
+        console.log('Doctor object keys:', Object.keys(this.doctor || {}));
+        console.log('Doctor first_name:', this.doctor?.first_name);
+        console.log('Doctor specialization:', this.doctor?.specialization);
+
+        // Force change detection
+        this.cdr.detectChanges();
 
         // Load available slots for today
         if (this.appointmentDate) {
@@ -122,7 +142,7 @@ export class Appointment implements OnInit {
         }
       },
       error: (error) => {
-        console.error('Error loading doctor:', error);
+        console.error('API call failed:', error);
         this.loading = false;
         this.errors['general'] = 'Failed to load doctor details. Please try again.';
       }
@@ -476,8 +496,16 @@ export class Appointment implements OnInit {
     this.router.navigate(['/symptoms']);
   }
 
-  getAvailableSlotsCount(): number {
-    return this.availableSlots.filter(slot => slot.available).length;
+  get isLoading(): boolean {
+    return this.loading;
+  }
+
+  get hasDoctor(): boolean {
+    return !!this.doctor;
+  }
+
+  get doctorData(): any {
+    return this.doctor;
   }
 
   // Helper methods for template
@@ -513,6 +541,14 @@ export class Appointment implements OnInit {
       default:
         return '';
     }
+  }
+
+  getAvailableSlotsCount(): number {
+    return this.availableSlots.filter(slot => slot.available).length;
+  }
+
+  ngOnDestroy() {
+    console.log('Appointment component destroyed');
   }
 }
 

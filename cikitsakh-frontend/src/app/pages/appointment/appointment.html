@@ -14,18 +14,19 @@
       <div class="col-lg-10 col-xl-8">
 
         <!-- Loading State -->
-        <div class="loading-state" *ngIf="loading">
+        <div class="loading-state" *ngIf="isLoading">
           <div class="loading-card">
             <div class="spinner-container">
               <div class="spinner"></div>
             </div>
             <h4>Loading Doctor Details...</h4>
             <p>Please wait while we fetch the doctor's information</p>
+            <p>Debug: loading={{isLoading}}, doctor={{hasDoctor}}, doctorData={{doctorData | json}}</p>
           </div>
         </div>
 
         <!-- Error State -->
-        <div class="error-state" *ngIf="!loading && !doctor">
+        <div class="error-state" *ngIf="!isLoading && !hasDoctor">
           <div class="error-card">
             <div class="error-icon">
               <i class="fas fa-exclamation-triangle"></i>
@@ -37,7 +38,19 @@
         </div>
 
         <!-- Booking Form -->
-        <div class="booking-form" *ngIf="!loading && doctor">
+        <div class="booking-form" *ngIf="!isLoading && hasDoctor">
+          <div style="background: green; color: white; padding: 20px; margin: 20px; border: 2px solid black;">
+            <h2>✅ SUCCESS: Doctor data loaded!</h2>
+            <p>Doctor: {{doctorData?.first_name}} {{doctorData?.last_name}}</p>
+            <p>Specialization: {{doctorData?.specialization}}</p>
+            <p>Care Type: {{careType}}</p>
+          </div>
+          
+          <!-- Temporarily comment out the complex form to test -->
+          <!-- 
+          <!-- Progress Steps -->
+          <!-- etc... -->
+          -->
           <!-- Progress Steps -->
           <div class="progress-steps">
             <div class="step" [class.active]="true">
