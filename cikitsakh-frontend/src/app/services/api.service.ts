@@ -10,6 +10,13 @@ export class ApiService {
 
   constructor(private http: HttpClient) { }
 
+  translateSymptoms(text: string, sourceLanguage: string = 'auto'): Observable<any> {
+    return this.http.post(`${this.baseUrl}/translate-symptoms/`, {
+      text,
+      source_language: sourceLanguage
+    });
+  }
+
   analyzeSymptoms(symptoms: string, patientType: 'human' | 'pet'): Observable<any> {
     return this.http.post(`${this.baseUrl}/analyze-symptoms/`, {
       symptoms,

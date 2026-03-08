@@ -10,6 +10,8 @@ from .serializers import (
     PatientSerializer, AnimalSerializer
 )
 from .ml.symptom_analyzer import SymptomAnalyzer
+from .ml.enhanced_symptom_analyzer import EnhancedSymptomAnalyzer
+from .ml.bedrock_translator import BedrockTranslator
 
 
 def haversine_distance(lat1, lon1, lat2, lon2):
@@ -162,6 +164,39 @@ class VetDoctorViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 @api_view(['POST'])
+def translate_symptoms(request):
+    """
+    Translate Marathi/Hindi symptoms to English using AWS Bedrock
+    Body: { "text": "...", "source_language": "auto|marathi|hindi" }
+    """
+    text = request.data.get('text', '')
+    source_language = request.data.get('source_language', 'auto')
+    
+    if not text:
+        return Response(
+            {'error': 'Text is required'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    try:
+        translator = BedrockTranslator()
+        result = translator.translate_to_english(text, source_language)
+        
+        if result['success']:
+            return Response(result, status=status.HTTP_200_OK)
+        else:
+            return Response(
+                {'error': result.get('error', 'Translation failed')},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    except Exception as e:
+        return Response(
+            {'error': f'Translation service error: {str(e)}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['POST'])
 def analyze_symptoms(request):
     """
     Analyze symptoms and return recommended specialties
@@ -176,7 +211,8 @@ def analyze_symptoms(request):
             status=status.HTTP_400_BAD_REQUEST
         )
     
-    analyzer = SymptomAnalyzer()
+    # Use enhanced analyzer with comprehensive training data
+    analyzer = EnhancedSymptomAnalyzer()
     result = analyzer.analyze_symptoms(symptoms, patient_type)
     severity = analyzer.extract_severity(symptoms)
     
@@ -315,6 +351,7 @@ def search_doctors_by_symptoms(request):
 def search_doctors_by_symptoms(request):
     """
     Advanced endpoint with progressive radius expansion and city-based fallback
+    Uses Enhanced Symptom Analyzer with comprehensive training data
     """
     symptoms = request.data.get('symptoms', '')
     patient_type = request.data.get('patient_type', 'human')
@@ -325,7 +362,8 @@ def search_doctors_by_symptoms(request):
     if not symptoms:
         return Response({'error': 'Symptoms are required'}, status=status.HTTP_400_BAD_REQUEST)
     
-    analyzer = SymptomAnalyzer()
+    # Use enhanced analyzer with comprehensive training data
+    analyzer = EnhancedSymptomAnalyzer()
     analysis = analyzer.analyze_symptoms(symptoms, patient_type)
     
     doctors_list = []

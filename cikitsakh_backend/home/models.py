@@ -118,7 +118,7 @@ class VetDoctor(models.Model):
     address = models.TextField(null=True, blank=True)
 
     class Meta:
-        db_table = 'doctor'
+        db_table = 'animal_doctors'
         managed = False
 
     def __str__(self):

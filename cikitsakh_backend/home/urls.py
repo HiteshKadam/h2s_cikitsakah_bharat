@@ -8,6 +8,7 @@ router.register(r'vet-doctors', views.VetDoctorViewSet, basename='vet-doctor')
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('translate-symptoms/', views.translate_symptoms, name='translate-symptoms'),
     path('analyze-symptoms/', views.analyze_symptoms, name='analyze-symptoms'),
     path('search-doctors/', views.search_doctors_by_symptoms, name='search-doctors'),
     

@@ -8,3 +8,36 @@
 .DS_Store
 *.log
 *.tsbuildinfo
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+*.egg-info/
+
+# Django
+*.sqlite3
+db.sqlite3
+/media
+/staticfiles
+
+# AWS Credentials (IMPORTANT!)
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+credentials
+config
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~

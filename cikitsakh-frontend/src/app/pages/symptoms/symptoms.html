@@ -14,14 +14,61 @@
 
             <div class="mb-3">
                 <label class="form-label">Describe Symptoms</label>
+                
+                <!-- Language Selection -->
+                <div class="btn-group mb-2 w-100" role="group">
+                    <button type="button" 
+                            class="btn btn-sm"
+                            [ngClass]="selectedLanguage === 'en-IN' ? 'btn-primary' : 'btn-outline-primary'"
+                            (click)="setLanguage('en-IN')">
+                        English
+                    </button>
+                    <button type="button" 
+                            class="btn btn-sm"
+                            [ngClass]="selectedLanguage === 'hi-IN' ? 'btn-primary' : 'btn-outline-primary'"
+                            (click)="setLanguage('hi-IN')">
+                        हिंदी (Hindi)
+                    </button>
+                    <button type="button" 
+                            class="btn btn-sm"
+                            [ngClass]="selectedLanguage === 'mr-IN' ? 'btn-primary' : 'btn-outline-primary'"
+                            (click)="setLanguage('mr-IN')">
+                        मराठी (Marathi)
+                    </button>
+                </div>
+                
                 <div class="input-group">
                     <textarea class="form-control" [(ngModel)]="symptoms" rows="3"
                         placeholder="e.g., chest pain, shortness of breath, fever..."></textarea>
-                    <button class="btn btn-outline-primary" (click)="startListening()" type="button">
-                        🎤
+                    <button class="btn" 
+                            [ngClass]="isRecording ? 'btn-danger' : 'btn-outline-primary'"
+                            (click)="startListening()" 
+                            type="button"
+                            [disabled]="translationInProgress">
+                        <span *ngIf="!isRecording && !translationInProgress">🎤</span>
+                        <span *ngIf="isRecording">⏹️</span>
+                        <span *ngIf="translationInProgress" class="spinner-border spinner-border-sm"></span>
                     </button>
                 </div>
-                <small class="text-muted">Be specific about your symptoms for better AI analysis</small>
+                
+                <small class="text-muted">
+                    <span *ngIf="!isRecording && !translationInProgress">
+                        Select language and click mic to record. Be specific about your symptoms for better AI analysis.
+                    </span>
+                    <span *ngIf="isRecording" class="text-danger">
+                        🔴 Recording... Click again to stop
+                    </span>
+                    <span *ngIf="translationInProgress" class="text-info">
+                        Translating to English using AI...
+                    </span>
+                </small>
+                
+                <div *ngIf="originalText && detectedLanguage" class="alert alert-info mt-2 mb-0">
+                    <small>
+                        <strong>Original ({{ detectedLanguage }}):</strong> {{ originalText }}<br>
+                        <strong>Translated:</strong> {{ symptoms }}
+                    </small>
+                </div>
             </div>
 
             <div class="mb-3" *ngIf="severity">
@@ -36,7 +83,8 @@
                 </div>
             </div>
 
-            <button class="btn btn-primary w-100" (click)="analyzeAndSearch()" [disabled]="loading || !symptoms">
+            <button class="btn btn-primary w-100" (click)="analyzeAndSearch()" 
+                    [disabled]="loading || !symptoms || translationInProgress">
                 <span *ngIf="!loading">🤖 AI Analyze & Find Doctors</span>
                 <span *ngIf="loading">
                     <span class="spinner-border spinner-border-sm me-2"></span>

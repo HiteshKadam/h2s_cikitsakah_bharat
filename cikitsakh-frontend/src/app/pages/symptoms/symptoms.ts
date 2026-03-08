@@ -23,6 +23,13 @@ export class SymptomsComponent implements OnInit {
   recommendedDoctors: any[] = [];
   showResults: boolean = false;
   Object = Object; // Make Object available in template
+  
+  // Voice recording properties
+  isRecording: boolean = false;
+  selectedLanguage: string = 'hi-IN'; // Default to Hindi
+  translationInProgress: boolean = false;
+  originalText: string = '';
+  detectedLanguage: string = '';
 
   constructor(
     private careService: CareSelectionService,
@@ -42,30 +49,92 @@ export class SymptomsComponent implements OnInit {
     this.router.navigate(['/']);
   }
 
+  setLanguage(lang: string) {
+    this.selectedLanguage = lang;
+  }
+
   startListening() {
     const SpeechRecognition =
       (window as any).SpeechRecognition ||
       (window as any).webkitSpeechRecognition;
 
     if (!SpeechRecognition) {
-      alert('Speech recognition not supported in this browser');
+      alert('Speech recognition not supported in this browser. Please use Chrome or Edge.');
+      return;
+    }
+
+    if (this.isRecording) {
+      // Stop recording
+      this.recognition?.stop();
+      this.isRecording = false;
       return;
     }
 
     this.recognition = new SpeechRecognition();
-    this.recognition.lang = 'en-IN';
+    this.recognition.lang = this.selectedLanguage; // Use selected language
     this.recognition.interimResults = false;
+    this.recognition.continuous = false;
 
+    this.isRecording = true;
     this.recognition.start();
 
     this.recognition.onresult = (event: any) => {
       const transcript = event.results[0][0].transcript;
-      this.symptoms = transcript;
+      this.originalText = transcript;
+      
+      // If language is Marathi or Hindi, translate to English
+      if (this.selectedLanguage === 'hi-IN' || this.selectedLanguage === 'mr-IN') {
+        this.translateAndSetSymptoms(transcript);
+      } else {
+        // English - use directly
+        this.symptoms = transcript;
+        this.isRecording = false;
+      }
     };
 
     this.recognition.onerror = (event: any) => {
       console.error('Speech recognition error', event);
+      this.isRecording = false;
+      alert('Error recognizing speech. Please try again.');
     };
+
+    this.recognition.onend = () => {
+      this.isRecording = false;
+    };
+  }
+
+  translateAndSetSymptoms(text: string) {
+    this.translationInProgress = true;
+    
+    // Determine source language
+    const sourceLanguage = this.selectedLanguage === 'mr-IN' ? 'marathi' : 'hindi';
+    
+    this.apiService.translateSymptoms(text, sourceLanguage).subscribe({
+      next: (response) => {
+        console.log('Translation response:', response);
+        
+        if (response.success && response.translation) {
+          this.symptoms = response.translation.translated_text;
+          this.detectedLanguage = response.translation.detected_language;
+          
+          // Show success message
+          alert(`Translated from ${this.detectedLanguage} to English successfully!`);
+        } else {
+          alert('Translation failed. Using original text.');
+          this.symptoms = text;
+        }
+        
+        this.translationInProgress = false;
+        this.isRecording = false;
+      },
+      error: (error) => {
+        console.error('Translation error:', error);
+        alert('Translation service unavailable. Using original text.');
+        this.symptoms = text;
+        this.translationInProgress = false;
+        this.isRecording = false;
+      }
+    });
   }
 
   analyzeAndSearch() {
