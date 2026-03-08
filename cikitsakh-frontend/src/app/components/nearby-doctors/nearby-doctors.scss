@@ -17,6 +17,9 @@
   box-shadow: 0 6px 20px rgba(0,0,0,0.06);
   transition: all 0.3s ease;
   border: 1px solid transparent;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .doctor-card:hover {
@@ -48,6 +51,9 @@
 
 .card-body {
   padding: 20px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
 }
 
 .specialization {
@@ -65,7 +71,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 18px;
+  margin-top: auto;
+  padding-top: 18px;
 }
 
 .book-btn {

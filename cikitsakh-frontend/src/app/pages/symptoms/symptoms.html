@@ -146,42 +146,43 @@
             No doctors found matching your symptoms within the search radius. Try adjusting your search or consult a general practitioner.
         </div>
 
-        <div class="card-container">
-            <div class="doctor-card" *ngFor="let doc of recommendedDoctors">
-
-                <div class="image-wrapper">
-                    <img [src]="doc.image" [alt]="doc.name">
-                    <span class="rating">{{ doc.rating || 4.5 }} ★</span>
-                    <span class="match-badge" *ngIf="doc.match_score">
+        <div class="row g-3">
+            <div class="col-12 col-md-6 col-lg-4" *ngFor="let doc of recommendedDoctors">
+                <div class="card h-100 shadow-sm">
+                    <div class="position-relative">
+                        <img [src]="doc.image" [alt]="doc.name" class="card-img-top" style="height: 200px; object-fit: cover;">
+                        <span class="position-absolute top-0 end-0 badge bg-warning text-dark m-2">{{ doc.rating || 4.5 }} ★</span>
+                        <span class="position-absolute top-0 start-0 badge bg-success m-2" *ngIf="doc.match_score">
                         {{ (doc.match_score * 100) | number:'1.0-0' }}% Match
                     </span>
                 </div>
 
-                <div class="card-body">
-                    <h3>{{ doc.name }}</h3>
-                    <p class="specialization">{{ doc.specialization || doc.specialty }}</p>
-                    <p class="match-reason" *ngIf="doc.match_reason">
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title">{{ doc.name }}</h5>
+                        <p class="card-text text-primary fw-bold">{{ doc.specialization || doc.specialty }}</p>
+                        <p class="card-text text-success small" *ngIf="doc.match_reason">
                         ✓ {{ doc.match_reason }}
                     </p>
-                    <p>{{ doc.experience }}</p>
-                    <p class="hospital">🏥 {{ doc.hospital }}</p>
-                    <p class="location">📍 {{ doc.location }}</p>
+                        <p class="card-text">{{ doc.experience }}</p>
+                        <p class="card-text">🏥 {{ doc.hospital }}</p>
+                        <p class="card-text">📍 {{ doc.location }}</p>
 
-                    <div class="bottom-info">
-                        <span *ngIf="doc.distance" class="distance-badge">
+                        <div class="mt-auto">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span *ngIf="doc.distance" class="badge bg-info">
                             📍 {{ doc.distance }} km away
                         </span>
-                        <span *ngIf="doc.search_info" class="text-muted small">
+                                <small *ngIf="doc.search_info" class="text-muted">
                             {{ doc.search_info }}
-                        </span>
-                        <button class="book-btn" (click)="bookAppointment(doc.doctor_id)">
-                            Book Appointment
-                        </button>
-                    </div>
+                                </small>
+                            </div>
+                            <button class="btn btn-primary w-100" (click)="bookAppointment(doc.doctor_id)">
+                                Book Appointment
+                            </button>
                 </div>
-
             </div>
         </div>
     </div>
+</div>    </div>
 
 </div>
