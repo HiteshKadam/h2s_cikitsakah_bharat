@@ -1,0 +1,93 @@
+.card {
+  border-radius: 15px;
+  border: none;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  padding: 12px;
+  font-weight: 600;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.form-control, .form-select {
+  padding: 12px;
+  border-radius: 8px;
+}
+
+.form-label {
+  font-weight: 600;
+  color: #333;
+}
+
+/* Error Toast Popup */
+.error-toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+  min-width: 350px;
+  max-width: 500px;
+  opacity: 0;
+  transform: translateX(400px);
+  transition: all 0.3s ease-in-out;
+  pointer-events: none;
+}
+
+.error-toast.show {
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
+}
+
+.toast-content {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+  color: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(238, 90, 111, 0.4);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.toast-content i.fa-exclamation-circle {
+  font-size: 20px;
+  display: inline-block;
+}
+
+.toast-content > span {
+  font-weight: 600;
+  font-size: 15px;
+  flex: 1;
+}
+
+.redirect-info {
+  padding-top: 10px;
+  margin-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.3);
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.redirect-info small {
+  font-size: 13px;
+  opacity: 0.9;
+}
+
+@media (max-width: 768px) {
+  .error-toast {
+    top: 10px;
+    right: 10px;
+    left: 10px;
+    min-width: auto;
+    max-width: none;
+  }
+}

@@ -1,0 +1,74 @@
+<div class="container mt-5">
+  <!-- Error Toast Popup -->
+  <div class="error-toast" *ngIf="errorMessage" [class.show]="showToast">
+    <div class="toast-content">
+      <i class="fas fa-exclamation-circle me-2"></i>
+      <span>{{ errorMessage }}</span>
+      <div *ngIf="isRedirecting" class="redirect-info mt-2">
+        <i class="fas fa-spinner fa-spin me-1"></i>
+        <small>Redirecting to registration...</small>
+      </div>
+    </div>
+  </div>
+
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <div class="card shadow-lg">
+        <div class="card-body p-5">
+          <button class="btn btn-link mb-3" (click)="goBack()">← Back</button>
+          
+          <h2 class="text-center mb-4">Doctor Login</h2>
+
+          <form (ngSubmit)="onLogin()">
+            <div class="mb-3">
+              <label class="form-label">Doctor Type</label>
+              <select class="form-select" [(ngModel)]="loginData.doctorType" name="doctorType" required>
+                <option value="human">Human Doctor</option>
+                <option value="vet">Veterinary Doctor</option>
+              </select>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Email</label>
+              <input 
+                type="email" 
+                class="form-control" 
+                [(ngModel)]="loginData.email" 
+                name="email"
+                placeholder="Enter your email"
+                required
+              />
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Password</label>
+              <input 
+                type="password" 
+                class="form-control" 
+                [(ngModel)]="loginData.password" 
+                name="password"
+                placeholder="Enter your password"
+                required
+              />
+            </div>
+
+            <button 
+              type="submit" 
+              class="btn btn-primary w-100 mb-3"
+              [disabled]="isLoading"
+            >
+              {{ isLoading ? 'Logging in...' : 'Login' }}
+            </button>
+
+            <div class="text-center">
+              <p class="mb-0">
+                New doctor? 
+                <a href="javascript:void(0)" (click)="goToRegister()" class="text-primary">Register here</a>
+              </p>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

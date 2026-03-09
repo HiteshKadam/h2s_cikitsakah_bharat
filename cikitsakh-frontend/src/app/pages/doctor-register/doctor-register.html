@@ -1,0 +1,153 @@
+<div class="container mt-5 mb-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card shadow-lg">
+        <div class="card-body p-5">
+          <button class="btn btn-link mb-3" (click)="goBack()">← Back</button>
+          
+          <h2 class="text-center mb-4">Doctor Registration</h2>
+
+          <form (ngSubmit)="onRegister()">
+            <div class="mb-3">
+              <label class="form-label">Doctor Type *</label>
+              <select class="form-select" [(ngModel)]="registerData.doctorType" name="doctorType" required>
+                <option value="human">Human Doctor</option>
+                <option value="vet">Veterinary Doctor</option>
+              </select>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">First Name *</label>
+                <input type="text" class="form-control" [(ngModel)]="registerData.firstName" name="firstName" placeholder="e.g., John" required />
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Last Name *</label>
+                <input type="text" class="form-control" [(ngModel)]="registerData.lastName" name="lastName" placeholder="e.g., Smith" required />
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Email *</label>
+                <input type="email" class="form-control" [(ngModel)]="registerData.email" name="email" required />
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Phone Number *</label>
+                <div class="input-group">
+                  <span class="input-group-text">+91</span>
+                  <input 
+                    type="tel" 
+                    class="form-control" 
+                    [(ngModel)]="registerData.phoneNumber" 
+                    name="phoneNumber" 
+                    placeholder="10 digit mobile number"
+                    maxlength="10"
+                    pattern="[0-9]{10}"
+                    required 
+                  />
+                </div>
+                <small class="text-muted">Enter 10 digit mobile number</small>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Password *</label>
+                <input type="password" class="form-control" [(ngModel)]="registerData.password" name="password" required />
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Confirm Password *</label>
+                <input type="password" class="form-control" [(ngModel)]="registerData.confirmPassword" name="confirmPassword" required />
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Gender *</label>
+                <select class="form-select" [(ngModel)]="registerData.gender" name="gender" required>
+                  <option value="">Select</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Age *</label>
+                <input type="number" class="form-control" [(ngModel)]="registerData.age" name="age" required />
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Years of Experience *</label>
+                <input type="number" class="form-control" [(ngModel)]="registerData.yearsExperience" name="yearsExperience" required />
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Specialization *</label>
+                <input type="text" class="form-control" [(ngModel)]="registerData.specialization" name="specialization" placeholder="e.g., Cardiology, General Physician" required />
+                <small class="text-muted">Enter your medical specialization</small>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Registration Number *</label>
+                <input type="text" class="form-control" [(ngModel)]="registerData.registrationNumber" name="registrationNumber" placeholder="e.g., REG12345" required />
+                <small class="text-muted">Medical council registration number</small>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Passout Date *</label>
+                <input type="date" class="form-control" [(ngModel)]="registerData.passoutDate" name="passoutDate" required />
+                <small class="text-muted">Medical degree completion date</small>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Clinic/Hospital Name</label>
+                <input type="text" class="form-control" [(ngModel)]="registerData.clinicName" name="clinicName" placeholder="e.g., City Hospital" />
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Address</label>
+              <textarea class="form-control" [(ngModel)]="registerData.address" name="address" rows="2"></textarea>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">City</label>
+                <input type="text" class="form-control" [(ngModel)]="registerData.city" name="city" />
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">State</label>
+                <input type="text" class="form-control" [(ngModel)]="registerData.state" name="state" />
+              </div>
+            </div>
+
+            <div class="alert alert-danger" *ngIf="errorMessage">
+              {{ errorMessage }}
+            </div>
+
+            <div class="alert alert-success" *ngIf="successMessage">
+              {{ successMessage }}
+            </div>
+
+            <button 
+              type="submit" 
+              class="btn btn-primary w-100 mb-3"
+              [disabled]="isLoading"
+            >
+              {{ isLoading ? 'Registering...' : 'Register' }}
+            </button>
+
+            <div class="text-center">
+              <p class="mb-0">
+                Already registered? 
+                <a href="javascript:void(0)" (click)="goToLogin()" class="text-primary">Login here</a>
+              </p>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,250 @@
+<div class="container mt-5 mb-5">
+  <!-- Success Toast Popup -->
+  <div class="success-toast" *ngIf="successMessage && !showEditPanel" [class.show]="showSuccessToast">
+    <div class="toast-content success">
+      <i class="fas fa-check-circle me-2"></i>
+      <span>{{ successMessage }}</span>
+    </div>
+  </div>
+
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>
+      <i class="fas fa-user-md me-2"></i>
+      {{ doctorType === 'human' ? 'Human Doctor' : 'Veterinary Doctor' }} Dashboard
+    </h2>
+    <div class="d-flex gap-2">
+      <button class="btn btn-outline-primary" (click)="toggleEditProfile()">
+        <i class="fas fa-edit me-2"></i>Edit Profile
+      </button>
+      <button class="btn btn-outline-danger" (click)="logout()">
+        <i class="fas fa-sign-out-alt me-2"></i>Logout
+      </button>
+    </div>
+  </div>
+
+  <!-- Edit Profile Side Panel -->
+  <div class="edit-profile-panel" [class.show]="showEditPanel">
+    <div class="panel-overlay" (click)="toggleEditProfile()"></div>
+    <div class="panel-content">
+      <div class="panel-header">
+        <h4><i class="fas fa-user-edit me-2"></i>Edit Profile</h4>
+        <button class="btn-close" (click)="toggleEditProfile()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      
+      <div class="panel-body">
+        <form (ngSubmit)="saveProfile()">
+          <!-- Address Section -->
+          <div class="mb-4">
+            <h6 class="section-title">Address Information</h6>
+            <div class="mb-3">
+              <label class="form-label">Address</label>
+              <textarea 
+                class="form-control" 
+                [(ngModel)]="profileData.address" 
+                name="address"
+                rows="2"
+                placeholder="Enter clinic/hospital address"
+              ></textarea>
+            </div>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">City</label>
+                <input 
+                  type="text" 
+                  class="form-control" 
+                  [(ngModel)]="profileData.city" 
+                  name="city"
+                  placeholder="City"
+                />
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">State</label>
+                <input 
+                  type="text" 
+                  class="form-control" 
+                  [(ngModel)]="profileData.state" 
+                  name="state"
+                  placeholder="State"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Clinic Timings Section -->
+          <div class="mb-4">
+            <h6 class="section-title">Clinic Timings</h6>
+            <div class="timing-group mb-3">
+              <label class="form-label">Morning Session</label>
+              <div class="row">
+                <div class="col-6">
+                  <label class="small-label">Opening Time</label>
+                  <input 
+                    type="time" 
+                    class="form-control" 
+                    [(ngModel)]="profileData.openTime1" 
+                    name="openTime1"
+                  />
+                </div>
+                <div class="col-6">
+                  <label class="small-label">Closing Time</label>
+                  <input 
+                    type="time" 
+                    class="form-control" 
+                    [(ngModel)]="profileData.closeTime1" 
+                    name="closeTime1"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div class="timing-group mb-3">
+              <label class="form-label">Evening Session (Optional)</label>
+              <div class="row">
+                <div class="col-6">
+                  <label class="small-label">Opening Time</label>
+                  <input 
+                    type="time" 
+                    class="form-control" 
+                    [(ngModel)]="profileData.openTime2" 
+                    name="openTime2"
+                  />
+                </div>
+                <div class="col-6">
+                  <label class="small-label">Closing Time</label>
+                  <input 
+                    type="time" 
+                    class="form-control" 
+                    [(ngModel)]="profileData.closeTime2" 
+                    name="closeTime2"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Status Section -->
+          <div class="mb-4">
+            <h6 class="section-title">Availability Status</h6>
+            <div class="form-check form-switch">
+              <input 
+                class="form-check-input" 
+                type="checkbox" 
+                [(ngModel)]="profileData.isActive" 
+                name="isActive"
+                id="statusSwitch"
+              />
+              <label class="form-check-label" for="statusSwitch">
+                {{ profileData.isActive ? 'Active (Accepting Appointments)' : 'Inactive (Not Accepting Appointments)' }}
+              </label>
+            </div>
+          </div>
+
+          <div class="alert alert-success" *ngIf="successMessage && showEditPanel">
+            <i class="fas fa-check-circle me-2"></i>{{ successMessage }}
+          </div>
+
+          <div class="alert alert-danger" *ngIf="errorMessage && showEditPanel">
+            <i class="fas fa-exclamation-circle me-2"></i>{{ errorMessage }}
+          </div>
+
+          <button 
+            type="submit" 
+            class="btn btn-primary w-100"
+            [disabled]="isSaving"
+          >
+            {{ isSaving ? 'Saving...' : 'Save Changes' }}
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="card shadow-lg">
+    <div class="card-header bg-primary text-white d-flex align-items-center justify-content-between">
+      <h4 class="mb-0">
+        <i class="fas fa-calendar-check me-2"></i>
+        Appointments
+      </h4>
+      <ul class="nav nav-tabs card-header-tabs">
+        <li class="nav-item">
+          <a class="nav-link" [class.active]="selectedTab === 'upcoming'" (click)="loadAppointments('upcoming')" style="cursor:pointer;">Upcoming</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" [class.active]="selectedTab === 'past'" (click)="loadAppointments('past')" style="cursor:pointer;">Past/Attended</a>
+        </li>
+      </ul>
+    </div>
+    <div class="card-body">
+      <div *ngIf="isLoading" class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-3">Loading appointments...</p>
+      </div>
+
+      <div *ngIf="!isLoading && errorMessage && !showEditPanel" class="alert alert-danger">
+        {{ errorMessage }}
+      </div>
+
+      <div *ngIf="!isLoading && !errorMessage && appointments.length === 0" class="text-center py-5">
+        <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+        <p class="text-muted">
+          {{ selectedTab === 'upcoming' ? 'No upcoming appointments' : 'No past or attended appointments' }}
+        </p>
+      </div>
+
+      <div *ngIf="!isLoading && !errorMessage && appointments.length > 0">
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Appointment ID</th>
+                <th>{{ doctorType === 'human' ? 'Patient Name' : 'Pet Name' }}</th>
+                <th *ngIf="doctorType === 'vet'">Owner Name</th>
+                <th>Date</th>
+                <th *ngIf="doctorType === 'human'">Time</th>
+                <th>Contact</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let appointment of appointments">
+                <td>{{ appointment.appointment_id }}</td>
+                <td>
+                  <strong *ngIf="doctorType === 'human'">
+                    {{ appointment.patient_first_name }} {{ appointment.patient_last_name }}
+                  </strong>
+                  <strong *ngIf="doctorType === 'vet'">
+                    {{ appointment.animal_name }}
+                  </strong>
+                  <div *ngIf="doctorType === 'vet'" class="text-muted small">
+                    {{ appointment.species }} - {{ appointment.breed }}
+                  </div>
+                </td>
+                <td *ngIf="doctorType === 'vet'">{{ appointment.owner_name }}</td>
+                <td>{{ formatDate(appointment.scheduling_date || appointment.appointment_date) }}</td>
+                <td *ngIf="doctorType === 'human'">{{ formatTime(appointment.scheduling_time) }}</td>
+                <td>{{ appointment.contact_number || appointment.owner_phone }}</td>
+                <td>
+                  <ng-container *ngIf="selectedTab === 'upcoming'; else statusText">
+                    <select class="form-select form-select-sm w-auto d-inline" [ngModel]="appointment.status" (ngModelChange)="onStatusChange(appointment, $event)">
+                      <option value="scheduled">Scheduled</option>
+                      <option value="inprogress">In Progress</option>
+                      <option value="attended">Attended</option>
+                      <option value="unattended">Unattended</option>
+                    </select>
+                  </ng-container>
+                  <ng-template #statusText>
+                    <span class="badge bg-success">{{ appointment.status || 'Scheduled' }}</span>
+                  </ng-template>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
