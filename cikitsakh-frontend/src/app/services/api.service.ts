@@ -2,27 +2,28 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ApiService {
     updateAppointmentStatus(appointmentId: string, status: string, type: 'human' | 'vet'): Observable<any> {
-      return this.http.patch(`${this.baseUrl}/appointments/${appointmentId}/status/`, { status, type });
+      return this.http.patch(`${environment.apiUrl}/api/appointments/${appointmentId}/status/`, { status, type });
     }
   private baseUrl = '/api';
 
   constructor(private http: HttpClient) { }
 
   translateSymptoms(text: string, sourceLanguage: string = 'auto'): Observable<any> {
-    return this.http.post(`${this.baseUrl}/translate-symptoms/`, {
+    return this.http.post(`${environment.apiUrl}/api/translate-symptoms/`, {
       text,
       source_language: sourceLanguage
     });
   }
 
   analyzeSymptoms(symptoms: string, patientType: 'human' | 'pet'): Observable<any> {
-    return this.http.post(`${this.baseUrl}/analyze-symptoms/`, {
+    return this.http.post(`${environment.apiUrl}/api/analyze-symptoms/`, {
       symptoms,
       patient_type: patientType
     });
@@ -35,7 +36,7 @@ export class ApiService {
     longitude: number,
     radius: number = 10
   ): Observable<any> {
-    return this.http.post(`${this.baseUrl}/search-doctors/`, {
+    return this.http.post(`${environment.apiUrl}/api/search-doctors/`, {
       symptoms,
       patient_type: patientType,
       latitude,
@@ -61,8 +62,8 @@ export class ApiService {
     }
 
     const endpoint = patientType === 'pet' 
-      ? `${this.baseUrl}/vet-doctors/nearby/`
-      : `${this.baseUrl}/human-doctors/nearby/`;
+      ? `${environment.apiUrl}/api/vet-doctors/nearby/`
+      : `${environment.apiUrl}/api/human-doctors/nearby/`;
 
     return this.http.get(endpoint, { params });
   }
@@ -83,7 +84,7 @@ export class ApiService {
       });
     }
 
-    return this.http.get(`${this.baseUrl}/doctors/`, { params });
+    return this.http.get(`${environment.apiUrl}/api/doctors/`, { params });
   }
 
   getHumanDoctors(filters?: {
@@ -101,7 +102,7 @@ export class ApiService {
       });
     }
 
-    return this.http.get(`${this.baseUrl}/human-doctors/`, { params });
+    return this.http.get(`${environment.apiUrl}/api/human-doctors/`, { params });
   }
 
   getVetDoctors(filters?: {
@@ -117,18 +118,18 @@ export class ApiService {
       });
     }
 
-    return this.http.get(`${this.baseUrl}/vet-doctors/`, { params });
+    return this.http.get(`${environment.apiUrl}/api/vet-doctors/`, { params });
   }
 
   // Appointment methods
   getDoctorDetails(doctorId: number, patientType: 'human' | 'pet' = 'human'): Observable<any> {
-    return this.http.get(`${this.baseUrl}/doctors/${doctorId}/`, {
+    return this.http.get(`${environment.apiUrl}/api/doctors/${doctorId}/`, {
       params: { type: patientType }
     });
   }
 
   getAvailableSlots(doctorId: number, date: string, patientType: 'human' | 'pet' = 'human'): Observable<any> {
-    return this.http.get(`${this.baseUrl}/doctors/${doctorId}/slots/`, {
+    return this.http.get(`${environment.apiUrl}/api/doctors/${doctorId}/slots/`, {
       params: { date, type: patientType }
     });
   }
@@ -146,7 +147,7 @@ export class ApiService {
     reason?: string;
     age?: number;
   }): Observable<any> {
-    return this.http.post(`${this.baseUrl}/appointments/human/create/`, appointmentData);
+    return this.http.post(`${environment.apiUrl}/api/appointments/human/create/`, appointmentData);
   }
 
   createAnimalAppointment(appointmentData: {
@@ -163,38 +164,38 @@ export class ApiService {
     appointment_date: string;
     reason?: string;
   }): Observable<any> {
-    return this.http.post(`${this.baseUrl}/appointments/animal/create/`, appointmentData);
+    return this.http.post(`${environment.apiUrl}/api/appointments/animal/create/`, appointmentData);
   }
 
   getAppointmentDetails(appointmentId: number, patientType: 'human' | 'pet' = 'human'): Observable<any> {
-    return this.http.get(`${this.baseUrl}/appointments/${appointmentId}/`, {
+    return this.http.get(`${environment.apiUrl}/api/appointments/${appointmentId}/`, {
       params: { type: patientType }
     });
   }
 
   // Doctor authentication methods
   doctorLogin(credentials: { email: string; password: string; doctorType: 'human' | 'vet' }): Observable<any> {
-    return this.http.post(`${this.baseUrl}/doctor/login/`, credentials);
+    return this.http.post(`${environment.apiUrl}/api/doctor/login/`, credentials);
   }
 
   doctorRegister(doctorData: any): Observable<any> {
-    return this.http.post(`${this.baseUrl}/doctor/register/`, doctorData);
+    return this.http.post(`${environment.apiUrl}/api/doctor/register/`, doctorData);
   }
 
   getDoctorAppointments(doctorId: string, doctorType: 'human' | 'vet', filter?: 'upcoming' | 'past'): Observable<any> {
     let params: any = { doctor_id: doctorId, type: doctorType };
     if (filter) params.filter = filter;
-    return this.http.get(`${this.baseUrl}/doctor/appointments/`, { params });
+    return this.http.get(`${environment.apiUrl}/api/doctor/appointments/`, { params });
   }
 
   getDoctorProfile(doctorId: string, doctorType: 'human' | 'vet'): Observable<any> {
-    return this.http.get(`${this.baseUrl}/doctor/profile/`, {
+    return this.http.get(`${environment.apiUrl}/api/doctor/profile/`, {
       params: { doctor_id: doctorId, type: doctorType }
     });
   }
 
   updateDoctorProfile(doctorId: string, doctorType: 'human' | 'vet', profileData: any): Observable<any> {
-    return this.http.put(`${this.baseUrl}/doctor/profile/update/`, {
+    return this.http.put(`${environment.apiUrl}/api/doctor/profile/update/`, {
       doctor_id: doctorId,
       type: doctorType,
       ...profileData
