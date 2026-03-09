@@ -21,4 +21,12 @@ export class HomeComponent {
     this.careService.setCareType(type);
     this.router.navigate(['/symptoms']);
   }
+
+  goToDoctorLogin() {
+    this.router.navigate(['/doctor-login']);
+  }
+
+  goToDoctorRegister() {
+    this.router.navigate(['/doctor-register']);
+  }
 }

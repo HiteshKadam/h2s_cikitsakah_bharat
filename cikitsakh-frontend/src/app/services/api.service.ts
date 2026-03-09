@@ -1,3 +1,4 @@
+// ...existing code...
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -6,6 +7,9 @@ import { Observable } from 'rxjs';
   providedIn: 'root'
 })
 export class ApiService {
+    updateAppointmentStatus(appointmentId: string, status: string, type: 'human' | 'vet'): Observable<any> {
+      return this.http.patch(`${this.baseUrl}/appointments/${appointmentId}/status/`, { status, type });
+    }
   private baseUrl = '/api';
 
   constructor(private http: HttpClient) { }
@@ -165,6 +169,35 @@ export class ApiService {
   getAppointmentDetails(appointmentId: number, patientType: 'human' | 'pet' = 'human'): Observable<any> {
     return this.http.get(`${this.baseUrl}/appointments/${appointmentId}/`, {
       params: { type: patientType }
+    });
+  }
+
+  // Doctor authentication methods
+  doctorLogin(credentials: { email: string; password: string; doctorType: 'human' | 'vet' }): Observable<any> {
+    return this.http.post(`${this.baseUrl}/doctor/login/`, credentials);
+  }
+
+  doctorRegister(doctorData: any): Observable<any> {
+    return this.http.post(`${this.baseUrl}/doctor/register/`, doctorData);
+  }
+
+  getDoctorAppointments(doctorId: string, doctorType: 'human' | 'vet', filter?: 'upcoming' | 'past'): Observable<any> {
+    let params: any = { doctor_id: doctorId, type: doctorType };
+    if (filter) params.filter = filter;
+    return this.http.get(`${this.baseUrl}/doctor/appointments/`, { params });
+  }
+
+  getDoctorProfile(doctorId: string, doctorType: 'human' | 'vet'): Observable<any> {
+    return this.http.get(`${this.baseUrl}/doctor/profile/`, {
+      params: { doctor_id: doctorId, type: doctorType }
+    });
+  }
+
+  updateDoctorProfile(doctorId: string, doctorType: 'human' | 'vet', profileData: any): Observable<any> {
+    return this.http.put(`${this.baseUrl}/doctor/profile/update/`, {
+      doctor_id: doctorId,
+      type: doctorType,
+      ...profileData
     });
   }
 }

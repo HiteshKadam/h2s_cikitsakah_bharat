@@ -1,3 +1,29 @@
+from rest_framework.decorators import api_view
+
+# ...existing code...
+
+@api_view(['PATCH'])
+def update_appointment_status(request, appointment_id):
+    """
+    Update the status of a human or animal appointment
+    Body: { "status": "new_status", "type": "human"|"vet" }
+    """
+    status_value = request.data.get('status')
+    appt_type = request.data.get('type', 'human')
+    if not status_value:
+        return Response({'error': 'Missing status'}, status=status.HTTP_400_BAD_REQUEST)
+    try:
+        if appt_type == 'human':
+            appt = HumanAppointment.objects.get(appointment_id=appointment_id)
+        else:
+            appt = AnimalAppointment.objects.get(appointment_id=appointment_id)
+        appt.status = status_value
+        appt.save()
+        return Response({'success': True, 'appointment_id': appointment_id, 'status': appt.status})
+    except (HumanAppointment.DoesNotExist, AnimalAppointment.DoesNotExist):
+        return Response({'error': 'Appointment not found'}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 from django.shortcuts import render
 from rest_framework import viewsets, status
 from rest_framework.decorators import api_view, action
@@ -1230,3 +1256,586 @@ def get_appointment_details(request, appointment_id):
         )
 
 
+
+
+# Doctor Authentication and Dashboard Views
+
+@api_view(['POST'])
+def doctor_login(request):
+    """
+    Doctor login endpoint
+    Body: { "email": "...", "password": "...", "doctorType": "human" or "vet" }
+    """
+    import hashlib
+    
+    email = request.data.get('email', '').strip().lower()
+    password = request.data.get('password', '')
+    doctor_type = request.data.get('doctorType', 'human')
+    
+    if not email or not password:
+        return Response(
+            {'error': 'Email and password are required'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    # Hash password for comparison
+    password_hash = hashlib.sha256(password.encode()).hexdigest()
+    
+    try:
+        from django.db import connection
+        
+        if doctor_type == 'human':
+            with connection.cursor() as cursor:
+                # First check if email exists
+                cursor.execute(
+                    "SELECT doctor_id, first_name, last_name, email, password_hash FROM human_doctors WHERE email = %s",
+                    [email]
+                )
+                row = cursor.fetchone()
+                
+                if not row:
+                    # User doesn't exist
+                    return Response({
+                        'error': 'User does not exist. Please register first.',
+                        'errorType': 'USER_NOT_FOUND',
+                        'redirectTo': 'register'
+                    }, status=status.HTTP_404_NOT_FOUND)
+                
+                doctor_id, first_name, last_name, stored_email, stored_password_hash = row
+                
+                # Check if password matches
+                if stored_password_hash != password_hash:
+                    return Response({
+                        'error': 'Login password is not matching. Please try again.',
+                        'errorType': 'INVALID_PASSWORD'
+                    }, status=status.HTTP_401_UNAUTHORIZED)
+                
+                # Successful login
+                token = hashlib.sha256(f"{doctor_id}{email}".encode()).hexdigest()
+                
+                return Response({
+                    'success': True,
+                    'token': token,
+                    'doctor_id': doctor_id,
+                    'doctor_name': f"Dr. {first_name} {last_name}",
+                    'doctor_type': 'human'
+                })
+                
+        else:  # vet
+            with connection.cursor() as cursor:
+                # First check if email exists
+                cursor.execute(
+                    "SELECT doctor_id, name, email, password_hash FROM animal_doctors WHERE email = %s",
+                    [email]
+                )
+                row = cursor.fetchone()
+                
+                if not row:
+                    # User doesn't exist
+                    return Response({
+                        'error': 'User does not exist. Please register first.',
+                        'errorType': 'USER_NOT_FOUND',
+                        'redirectTo': 'register'
+                    }, status=status.HTTP_404_NOT_FOUND)
+                
+                doctor_id, name, stored_email, stored_password_hash = row
+                
+                # Check if password matches
+                if stored_password_hash != password_hash:
+                    return Response({
+                        'error': 'Login password is not matching. Please try again.',
+                        'errorType': 'INVALID_PASSWORD'
+                    }, status=status.HTTP_401_UNAUTHORIZED)
+                
+                # Successful login
+                token = hashlib.sha256(f"{doctor_id}{email}".encode()).hexdigest()
+                
+                return Response({
+                    'success': True,
+                    'token': token,
+                    'doctor_id': doctor_id,
+                    'doctor_name': name,
+                    'doctor_type': 'vet'
+                })
+        
+    except Exception as e:
+        import traceback
+        print(f"Login error: {traceback.format_exc()}")
+        return Response(
+            {'error': f'Login failed: {str(e)}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['POST'])
+def doctor_register(request):
+    """
+    Doctor registration endpoint
+    """
+    import hashlib
+    from django.db import connection, transaction
+    import logging
+    
+    logger = logging.getLogger(__name__)
+    
+    try:
+        data = request.data
+        logger.info(f"Registration request received: {data}")
+        
+        doctor_type = data.get('doctorType', 'human')
+        
+        # Validate required fields
+        required_fields = ['firstName', 'lastName', 'email', 'password', 'phoneNumber', 
+                          'gender', 'age', 'specialization', 'yearsExperience', 
+                          'registrationNumber', 'passoutDate']
+        
+        missing_fields = [field for field in required_fields if not data.get(field)]
+        if missing_fields:
+            logger.error(f"Missing fields: {missing_fields}")
+            return Response(
+                {'error': f'Missing required fields: {", ".join(missing_fields)}'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Hash password
+        password_hash = hashlib.sha256(data['password'].encode()).hexdigest()
+        
+        with transaction.atomic():
+            with connection.cursor() as cursor:
+                if doctor_type == 'human':
+                    # Check if email already exists
+                    cursor.execute("SELECT doctor_id FROM human_doctors WHERE email = %s", [data['email']])
+                    if cursor.fetchone():
+                        return Response(
+                            {'error': 'Email already registered'},
+                            status=status.HTTP_409_CONFLICT
+                        )
+                    
+                    # Get or create gender
+                    gender_id = None
+                    if data.get('gender'):
+                        gender_map = {'Male': 'M', 'Female': 'F', 'Other': 'O'}
+                        gender_id = gender_map.get(data['gender'], 'O')
+                    
+                    # Create address if provided
+                    address_id = None
+                    if data.get('address') or data.get('city') or data.get('state'):
+                        # Generate address_id
+                        cursor.execute("SELECT COALESCE(MAX(CAST(SUBSTRING(address_id FROM 5) AS INTEGER)), 0) FROM address WHERE address_id ~ '^ADDR[0-9]+'")
+                        result = cursor.fetchone()
+                        next_addr_id = (result[0] or 0) + 1
+                        address_id = f"ADDR{next_addr_id:04d}"
+                        
+                        cursor.execute("""
+                            INSERT INTO address (address_id, address, city, state)
+                            VALUES (%s, %s, %s, %s)
+                        """, [
+                            address_id,
+                            data.get('address', ''),
+                            data.get('city', ''),
+                            data.get('state', '')
+                        ])
+                    
+                    # Insert new human doctor with proper formatting
+                    logger.info("Inserting human doctor")
+                    cursor.execute("""
+                        INSERT INTO human_doctors 
+                        (doctor_id, first_name, last_name, gender_id, email, password_hash, 
+                         phone_number, specialization, years_experience, registration_number, 
+                         age, passout_date, status, address_id, open_time_1, close_time_1)
+                        VALUES (DEFAULT, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        RETURNING doctor_id
+                    """, [
+                        data['firstName'].strip().title(),  # Proper case
+                        data['lastName'].strip().title(),   # Proper case
+                        gender_id,
+                        data['email'].strip().lower(),      # Lowercase email
+                        password_hash,
+                        data['phoneNumber'].strip(),
+                        data['specialization'].strip().title(),  # Proper case
+                        int(data['yearsExperience']),
+                        data['registrationNumber'].strip().upper(),  # Uppercase reg number
+                        int(data['age']), 
+                        data['passoutDate'], 
+                        'Active',  # Proper case
+                        address_id,
+                        '09:00:00',  # Default opening time
+                        '17:00:00'   # Default closing time
+                    ])
+                    
+                    doctor_id = cursor.fetchone()[0]
+                    doctor_name = f"Dr. {data['firstName'].strip().title()} {data['lastName'].strip().title()}"
+                    logger.info(f"Human doctor created: {doctor_id}")
+                    
+                else:  # vet
+                    # Check if email already exists
+                    cursor.execute("SELECT doctor_id FROM animal_doctors WHERE email = %s", [data['email']])
+                    if cursor.fetchone():
+                        return Response(
+                            {'error': 'Email already registered'},
+                            status=status.HTTP_409_CONFLICT
+                        )
+                    
+                    # Generate vet doctor ID (max 10 chars)
+                    logger.info("Generating vet doctor ID")
+                    cursor.execute("""
+                        SELECT COALESCE(MAX(CAST(SUBSTRING(doctor_id FROM 2) AS INTEGER)), 0) 
+                        FROM animal_doctors 
+                        WHERE doctor_id ~ '^V[0-9]+$'
+                    """)
+                    result = cursor.fetchone()
+                    next_id = (result[0] or 0) + 1
+                    vet_id = f"V{next_id:03d}"
+                    logger.info(f"Generated vet ID: {vet_id}")
+                    
+                    # Insert new vet doctor with proper formatting
+                    logger.info("Inserting vet doctor")
+                    cursor.execute("""
+                        INSERT INTO animal_doctors 
+                        (doctor_id, name, email, password_hash, phone, specialty, 
+                         experience, registration_number, age, passout_date, 
+                         gender, clinic_name, address, city, state, license_number,
+                         open_time_1, close_time_1)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    """, [
+                        vet_id,
+                        f"Dr. {data['firstName'].strip().title()} {data['lastName'].strip().title()}", 
+                        data['email'].strip().lower(), 
+                        password_hash, 
+                        data['phoneNumber'].strip(),
+                        data['specialization'].strip().title(), 
+                        int(data['yearsExperience']),
+                        data['registrationNumber'].strip().upper(), 
+                        int(data['age']), 
+                        data['passoutDate'],
+                        data['gender'][:10],
+                        data.get('clinicName', '').strip().title()[:150],
+                        data.get('address', '').strip(),
+                        data.get('city', '').strip().title()[:100],
+                        data.get('state', '').strip().title()[:100],
+                        data['registrationNumber'].strip().upper()[:20],
+                        '09:00:00',  # Default opening time
+                        '17:00:00'   # Default closing time
+                    ])
+                    
+                    doctor_id = vet_id
+                    doctor_name = f"Dr. {data['firstName'].strip().title()} {data['lastName'].strip().title()}"
+                    logger.info(f"Vet doctor created: {doctor_id}")
+        
+        return Response({
+            'success': True,
+            'message': 'Registration successful',
+            'doctor_id': doctor_id,
+            'doctor_name': doctor_name
+        }, status=status.HTTP_201_CREATED)
+        
+    except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
+        logger.error(f"Registration error:\n{error_details}")
+        print(f"=== REGISTRATION ERROR ===")
+        print(error_details)
+        print(f"=========================")
+        return Response(
+            {'error': f'Registration failed: {str(e)}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['GET'])
+def get_doctor_appointments(request):
+    """
+    Get all appointments for a doctor
+    Query params: doctor_id, type (human/vet)
+    """
+    doctor_id = request.query_params.get('doctor_id')
+    doctor_type = request.query_params.get('type', 'human')
+    filter_type = request.query_params.get('filter', None)  # 'upcoming' or 'past'
+
+    if not doctor_id:
+        return Response(
+            {'error': 'doctor_id is required'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    from datetime import date
+    today = date.today()
+
+    def is_attended(status):
+        if not status:
+            return False
+        return status.lower() in ['attended', 'completed', 'done']
+
+    try:
+        if doctor_type == 'human':
+            qs = HumanAppointment.objects.filter(doctor_id=doctor_id).select_related('patient', 'doctor')
+            if filter_type == 'upcoming':
+                qs = qs.filter(
+                    models.Q(scheduling_date__gt=today) |
+                    (models.Q(scheduling_date=today) & ~models.Q(status__iexact='attended') & ~models.Q(status__iexact='completed') & ~models.Q(status__iexact='done'))
+                )
+            elif filter_type == 'past':
+                qs = qs.filter(
+                    models.Q(scheduling_date__lt=today) |
+                    models.Q(status__iexact='attended') |
+                    models.Q(status__iexact='completed') |
+                    models.Q(status__iexact='done')
+                )
+            appointments = qs.order_by('-scheduling_date', '-scheduling_time')
+            appointments_data = []
+            for apt in appointments:
+                appointments_data.append({
+                    'appointment_id': apt.appointment_id,
+                    'patient_first_name': apt.patient.first_name,
+                    'patient_last_name': apt.patient.last_name,
+                    'contact_number': apt.patient.contact_number,
+                    'scheduling_date': apt.scheduling_date,
+                    'scheduling_time': apt.scheduling_time,
+                    'status': apt.status or 'scheduled',
+                    'age': apt.age
+                })
+        else:
+            qs = AnimalAppointment.objects.filter(doctor_id=doctor_id).select_related('animal', 'animal__owner', 'doctor')
+            if filter_type == 'upcoming':
+                qs = qs.filter(
+                    models.Q(appointment_date__gt=today) |
+                    (models.Q(appointment_date=today) & ~models.Q(status__iexact='attended') & ~models.Q(status__iexact='completed') & ~models.Q(status__iexact='done'))
+                )
+            elif filter_type == 'past':
+                qs = qs.filter(
+                    models.Q(appointment_date__lt=today) |
+                    models.Q(status__iexact='attended') |
+                    models.Q(status__iexact='completed') |
+                    models.Q(status__iexact='done')
+                )
+            appointments = qs.order_by('-appointment_date')
+            appointments_data = []
+            for apt in appointments:
+                appointments_data.append({
+                    'appointment_id': apt.appointment_id,
+                    'animal_name': apt.animal.animal_name,
+                    'species': apt.animal.species,
+                    'breed': apt.animal.breed,
+                    'owner_name': apt.animal.owner.owner_name,
+                    'owner_phone': apt.animal.owner.phone,
+                    'appointment_date': apt.appointment_date,
+                    'status': apt.status or 'scheduled'
+                })
+
+        return Response({
+            'success': True,
+            'appointments': appointments_data,
+            'total': len(appointments_data)
+        })
+
+    except Exception as e:
+        return Response(
+            {'error': f'Failed to fetch appointments: {str(e)}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+
+@api_view(['GET'])
+def get_doctor_profile(request):
+    """
+    Get doctor profile information
+    Query params: doctor_id, type (human/vet)
+    """
+    doctor_id = request.query_params.get('doctor_id')
+    doctor_type = request.query_params.get('type', 'human')
+    
+    if not doctor_id:
+        return Response(
+            {'error': 'doctor_id is required'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    try:
+        from django.db import connection
+        
+        if doctor_type == 'human':
+            with connection.cursor() as cursor:
+                cursor.execute("""
+                    SELECT h.doctor_id, h.first_name, h.last_name, h.email, h.phone_number,
+                           h.specialization, h.years_experience, h.registration_number,
+                           h.status, h.open_time_1, h.close_time_1, h.open_time_2, h.close_time_2,
+                           a.address, a.city, a.state
+                    FROM human_doctors h
+                    LEFT JOIN address a ON h.address_id = a.address_id
+                    WHERE h.doctor_id = %s
+                """, [doctor_id])
+                
+                row = cursor.fetchone()
+                if not row:
+                    return Response({'error': 'Doctor not found'}, status=status.HTTP_404_NOT_FOUND)
+                
+                profile = {
+                    'doctor_id': row[0],
+                    'first_name': row[1],
+                    'last_name': row[2],
+                    'email': row[3],
+                    'phone_number': row[4],
+                    'specialization': row[5],
+                    'years_experience': row[6],
+                    'registration_number': row[7],
+                    'status': row[8],
+                    'open_time_1': str(row[9]) if row[9] else None,
+                    'close_time_1': str(row[10]) if row[10] else None,
+                    'open_time_2': str(row[11]) if row[11] else None,
+                    'close_time_2': str(row[12]) if row[12] else None,
+                    'address': row[13],
+                    'city': row[14],
+                    'state': row[15]
+                }
+        else:  # vet
+            with connection.cursor() as cursor:
+                cursor.execute("""
+                    SELECT doctor_id, name, email, phone, specialty, experience,
+                           registration_number, open_time_1, close_time_1, 
+                           open_time_2, close_time_2, address, city, state, clinic_name
+                    FROM animal_doctors
+                    WHERE doctor_id = %s
+                """, [doctor_id])
+                
+                row = cursor.fetchone()
+                if not row:
+                    return Response({'error': 'Doctor not found'}, status=status.HTTP_404_NOT_FOUND)
+                
+                profile = {
+                    'doctor_id': row[0],
+                    'name': row[1],
+                    'email': row[2],
+                    'phone': row[3],
+                    'specialty': row[4],
+                    'experience': row[5],
+                    'registration_number': row[6],
+                    'open_time_1': str(row[7]) if row[7] else None,
+                    'close_time_1': str(row[8]) if row[8] else None,
+                    'open_time_2': str(row[9]) if row[9] else None,
+                    'close_time_2': str(row[10]) if row[10] else None,
+                    'address': row[11],
+                    'city': row[12],
+                    'state': row[13],
+                    'clinic_name': row[14],
+                    'status': 'Active'  # Default for vet doctors
+                }
+        
+        return Response({
+            'success': True,
+            'profile': profile
+        })
+        
+    except Exception as e:
+        import traceback
+        print(f"Get profile error: {traceback.format_exc()}")
+        return Response(
+            {'error': f'Failed to fetch profile: {str(e)}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['PUT'])
+def update_doctor_profile(request):
+    """
+    Update doctor profile information
+    Body: { doctor_id, type, address, city, state, openTime1, closeTime1, openTime2, closeTime2, status }
+    """
+    from django.db import connection, transaction
+    
+    doctor_id = request.data.get('doctor_id')
+    doctor_type = request.data.get('type', 'human')
+    
+    if not doctor_id:
+        return Response(
+            {'error': 'doctor_id is required'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    try:
+        with transaction.atomic():
+            with connection.cursor() as cursor:
+                if doctor_type == 'human':
+                    # Update or create address
+                    address_id = None
+                    if request.data.get('address') or request.data.get('city') or request.data.get('state'):
+                        # Get existing address_id
+                        cursor.execute("SELECT address_id FROM human_doctors WHERE doctor_id = %s", [doctor_id])
+                        result = cursor.fetchone()
+                        if result and result[0]:
+                            address_id = result[0]
+                            # Update existing address
+                            cursor.execute("""
+                                UPDATE address 
+                                SET address = %s, city = %s, state = %s
+                                WHERE address_id = %s
+                            """, [
+                                request.data.get('address', ''),
+                                request.data.get('city', ''),
+                                request.data.get('state', ''),
+                                address_id
+                            ])
+                        else:
+                            # Create new address
+                            cursor.execute("SELECT COALESCE(MAX(CAST(SUBSTRING(address_id FROM 5) AS INTEGER)), 0) FROM address WHERE address_id ~ '^ADDR[0-9]+'")
+                            result = cursor.fetchone()
+                            next_addr_id = (result[0] or 0) + 1
+                            address_id = f"ADDR{next_addr_id:04d}"
+                            
+                            cursor.execute("""
+                                INSERT INTO address (address_id, address, city, state)
+                                VALUES (%s, %s, %s, %s)
+                            """, [
+                                address_id,
+                                request.data.get('address', ''),
+                                request.data.get('city', ''),
+                                request.data.get('state', '')
+                            ])
+                    
+                    # Update doctor profile
+                    cursor.execute("""
+                        UPDATE human_doctors
+                        SET open_time_1 = %s, close_time_1 = %s,
+                            open_time_2 = %s, close_time_2 = %s,
+                            status = %s, address_id = %s
+                        WHERE doctor_id = %s
+                    """, [
+                        request.data.get('openTime1') or None,
+                        request.data.get('closeTime1') or None,
+                        request.data.get('openTime2') or None,
+                        request.data.get('closeTime2') or None,
+                        request.data.get('status', 'Active'),
+                        address_id,
+                        doctor_id
+                    ])
+                    
+                else:  # vet
+                    cursor.execute("""
+                        UPDATE animal_doctors
+                        SET address = %s, city = %s, state = %s,
+                            open_time_1 = %s, close_time_1 = %s,
+                            open_time_2 = %s, close_time_2 = %s
+                        WHERE doctor_id = %s
+                    """, [
+                        request.data.get('address', ''),
+                        request.data.get('city', ''),
+                        request.data.get('state', ''),
+                        request.data.get('openTime1') or None,
+                        request.data.get('closeTime1') or None,
+                        request.data.get('openTime2') or None,
+                        request.data.get('closeTime2') or None,
+                        doctor_id
+                    ])
+        
+        return Response({
+            'success': True,
+            'message': 'Profile updated successfully'
+        })
+        
+    except Exception as e:
+        import traceback
+        print(f"Update profile error: {traceback.format_exc()}")
+        return Response(
+            {'error': f'Failed to update profile: {str(e)}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )

@@ -12,3 +12,51 @@
   transform: translateY(-5px);
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
 }
+
+.doctor-portal-section {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 10;
+
+  .btn {
+    padding: 8px 20px;
+    font-weight: 600;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    font-size: 14px;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+  }
+
+  .btn-outline-primary {
+    border: 2px solid #667eea;
+    color: #667eea;
+    background: white;
+  }
+
+  .btn-outline-primary:hover {
+    background: #667eea;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+  }
+}
+
+@media (max-width: 768px) {
+  .doctor-portal-section {
+    position: relative;
+    top: 0;
+    right: 0;
+    margin-bottom: 30px;
+    text-align: center;
+  }
+}
